@@ -1,0 +1,2955 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full w-full smooth-scroll">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flex Wash - Sistema de Gestão Inteligente</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HTML2PDF Library (CDN para Exportar em PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Mantém o layout fixo e fluido sem barras extras */
+        }
+        
+        /* Proteção Defensiva contra Ícones Quebrados (Evita renderização em quadrado) */
+        .fas, .far, .fab, .fa, [class^="fa-"], [class*=" fa-"] {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-transform: none !important;
+            line-height: 1 !important;
+            -webkit-font-smoothing: antialiased !important;
+        }
+
+        /* Personalização elegante de barras de rolagem */
+        ::-webkit-scrollbar {
+            width: 6px !important;
+            height: 6px !important;
+            display: block !important;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9 !important;
+            border-radius: 8px !important;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1 !important;
+            border-radius: 8px !important;
+            border: 1px solid #f1f5f9 !important;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8 !important;
+        }
+
+        /* Suporte para Firefox */
+        * {
+            scrollbar-width: thin !important;
+            scrollbar-color: #cbd5e1 #f1f5f9 !important;
+        }
+
+        .gradient-main {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 flex flex-col h-full w-full antialiased">
+
+    <!-- Sistema de feedback visual personalizado (Toasts) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[110] space-y-3 pointer-events-none"></div>
+
+    <!-- Backdrop de overlay para menu mobile -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden md:hidden transition-opacity duration-300"></div>
+
+    <!-- ========================================== -->
+    <!-- TELA DE LOGIN                              -->
+    <!-- ========================================== -->
+    <section id="login-screen" class="fixed inset-0 bg-[#0B132B] flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 border border-slate-100/80 relative overflow-hidden my-auto transition-all duration-300 hover:shadow-sky-900/10">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-sky-500 to-slate-900"></div>
+            
+            <!-- Logo Oficial do Sistema com Fallback Técnico -->
+            <div class="text-center mb-8 flex flex-col items-center justify-center">
+                <img src="8585a1f0-11b9-40ee-a0af-74ac2f6855bd.jpg" alt="Flex Wash" class="h-28 object-contain mb-2" onerror="this.onerror=null; this.outerHTML='<div class=\'w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm\'><i class=\'fas fa-car-wash\'></i></div><h1 class=\'text-3xl font-extrabold text-[#0B132B] tracking-tight\'>Flex Wash</h1><p class=\'text-sm text-slate-400 mt-2\'>Gestão Inteligente de Estética Automotiva</p>';">
+            </div>
+
+            <!-- Seletor de Perfil -->
+            <div class="mb-6">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Perfil de Acesso</label>
+                <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-xl">
+                    <button type="button" id="tab-admin" onclick="setLoginProfile('admin')" class="py-2.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-sm flex items-center justify-center gap-2">
+                        <i class="fas fa-user-shield"></i> Administrador
+                    </button>
+                    <button type="button" id="tab-staff" onclick="setLoginProfile('staff')" class="py-2.5 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2">
+                        <i class="fas fa-user-tie"></i> Funcionário
+                    </button>
+                </div>
+            </div>
+
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Usuário / E-mail</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fas fa-envelope text-sm"></i>
+                        </span>
+                        <input type="text" id="login-user" required class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm transition-all" value="admin@flexwash.com">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Senha de Acesso</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fas fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="login-pass" required class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm transition-all" value="••••••••">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-[#0B132B] hover:bg-blue-600 text-white font-bold py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-blue-900/10 hover:shadow-blue-600/20 mt-6 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]">
+                    Acessar Painel <i class="fas fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- LAYOUT PRINCIPAL DO SISTEMA                -->
+    <!-- ========================================== -->
+    <div id="app-layout" class="fixed inset-0 flex flex-col overflow-hidden bg-slate-50 hidden">
+        
+        <!-- CABEÇALHO (Altura Fixada em 72px) -->
+        <header class="bg-[#0B132B] text-white px-6 h-[72px] flex justify-between items-center shadow-md relative z-30 shrink-0 w-full">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white transition-colors text-xl md:hidden focus:outline-none p-1">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <!-- Logo Compacto do Header com Fallback de Ícone -->
+                <div class="flex items-center">
+                    <img src="8585a1f0-11b9-40ee-a0af-74ac2f6855bd.jpg" alt="Flex Wash" class="h-10 object-contain rounded" onerror="this.onerror=null; this.outerHTML='<div class=\'flex items-center gap-2\'><span class=\'text-sky-400 text-2xl\'><i class=\'fas fa-car-wash\'></i></span><span class=\'text-xl font-black tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent\'>FLEX WASH</span></div>';">
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 md:gap-4">
+                <span class="hidden lg:flex items-center gap-2 bg-slate-800 text-emerald-400 text-xs px-3 py-1.5 rounded-full border border-slate-700 font-medium shrink-0">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Modo Demonstrativo
+                </span>
+                
+                <div class="flex items-center gap-2.5 bg-slate-800/50 pl-3 pr-3 py-1.5 rounded-2xl border border-slate-800 relative shrink-0">
+                    <div class="text-right hidden sm:block">
+                        <p id="user-name" class="text-xs font-bold leading-tight text-white">Gustavo Melo</p>
+                        <p id="user-role" class="text-[9px] text-sky-400 font-bold uppercase tracking-wider">Administrador</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-inner uppercase">
+                        GM
+                    </div>
+                </div>
+
+                <!-- Botão de Sair com Destaque Vermelho -->
+                <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors flex items-colors gap-2 shadow-md shadow-rose-950/20 shrink-0">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- AREA DE TRABALHO: Alinhamento preciso e zerado no topo utilizando Flex-1 -->
+        <div class="flex-1 w-full flex overflow-hidden relative m-0 p-0 bg-slate-50 min-h-0">
+            
+            <!-- MENU DE NAVEGAÇÃO LATERAL (SIDEBAR) -->
+            <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between absolute md:relative h-full z-30 -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out overflow-y-auto shrink-0 m-0 p-0">
+                <div class="p-4 pt-3 space-y-2">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 mb-2">Navegação</p>
+                    
+                    <button onclick="setActiveTab('inicio')" id="tab-btn-inicio" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all text-blue-600 bg-blue-50/75 border-r-4 border-blue-600 text-left justify-start">
+                        <i class="fas fa-chart-pie text-lg"></i> Início
+                    </button>
+
+                    <button onclick="setActiveTab('clientes')" id="tab-btn-clientes" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-left justify-start">
+                        <i class="fas fa-user-friends text-lg"></i> Clientes
+                    </button>
+                    
+                    <button onclick="setActiveTab('historico')" id="tab-btn-historico" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-left justify-start">
+                        <i class="fas fa-history text-lg"></i> Histórico / Relatórios
+                    </button>
+                    
+                    <button onclick="setActiveTab('funcionarios')" id="tab-btn-funcionarios" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-left justify-start">
+                        <i class="fas fa-users text-lg"></i> Funcionários (Comissões)
+                    </button>
+
+                    <div id="admin-only-nav" class="pt-4 border-t border-slate-100 space-y-1">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-[#0B132B]/60 px-3 mb-2 flex items-center gap-1.5">
+                            <i class="fas fa-cog"></i> Configurações ADM
+                        </p>
+                        <button onclick="setActiveTab('admin-config')" id="tab-btn-admin-config" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-left justify-start">
+                            <i class="fas fa-sliders-h text-lg"></i> Painel de Controle
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-5 border-t border-slate-100 bg-slate-50/50">
+                    <div class="flex items-center gap-3 text-xs text-slate-400">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span>Flex Wash App v4.5</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CONTEÚDO DINÂMICO ROLÁVEL -->
+            <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 pb-28 smooth-scroll bg-slate-50 pt-2 md:pt-3 m-0">
+                
+                <!-- ========================================== -->
+                <!-- MENU DE NAVEGAÇÃO HORIZONTAL EM ABAS       -->
+                <!-- ========================================== -->
+                <div class="bg-white rounded-2xl p-1.5 border border-slate-200 shadow-sm flex flex-wrap gap-1.5 w-full mb-4 shrink-0">
+                    <button onclick="setActiveTab('inicio')" id="tab-btn-horiz-inicio" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/10">
+                        <i class="fas fa-chart-pie"></i> Início
+                    </button>
+                    <button onclick="setActiveTab('clientes')" id="tab-btn-horiz-clientes" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </button>
+                    <button onclick="setActiveTab('historico')" id="tab-btn-horiz-historico" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                        <i class="fas fa-history"></i> Histórico
+                    </button>
+                    <button onclick="setActiveTab('funcionarios')" id="tab-btn-horiz-funcionarios" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+                        <i class="fas fa-users"></i> Comissões
+                    </button>
+                    <button onclick="setActiveTab('admin-config')" id="tab-btn-horiz-admin-config" class="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 admin-only-tab hidden">
+                        <i class="fas fa-sliders-h"></i> Painel ADM
+                    </button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- ABA: INÍCIO (DASHBOARD)                    -->
+                <!-- ========================================== -->
+                <div id="content-inicio" class="tab-content space-y-6">
+                    
+                    <!-- GRID DE CARDS INTUITIVOS -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- CARD 1: RELAÇÃO DE VEÍCULOS -->
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Veículos do Dia</span>
+                                    <h2 id="metric-veh-total" class="text-4xl font-extrabold text-[#0B132B] mt-1">0</h2>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Distribuição de Categorias -->
+                            <div class="mt-6 space-y-3 pt-4 border-t border-slate-50">
+                                <div>
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1 font-medium">
+                                        <span>Pequeno Porte</span>
+                                        <span id="metric-veh-p" class="font-bold text-slate-800">0</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                        <div id="bar-veh-p" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1 font-medium">
+                                        <span>Médio Porte</span>
+                                        <span id="metric-veh-m" class="font-bold text-slate-800">0</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                        <div id="bar-veh-m" class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1 font-medium">
+                                        <span>Grande Porte</span>
+                                        <span id="metric-veh-g" class="font-bold text-slate-800">0</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                        <div id="bar-veh-g" class="bg-slate-800 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARD 2: FATURAMENTO ACUMULADO -->
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faturamento Hoje</span>
+                                    <h2 id="metric-faturamento" class="text-4xl font-extrabold text-[#0B132B] mt-1">R$ 0,00</h2>
+                                </div>
+                                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-slate-50 flex items-center gap-2 text-xs">
+                                <span class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md font-bold flex items-center gap-1">
+                                    <i class="fas fa-caret-up"></i> Metas
+                                </span>
+                                <span class="text-slate-400 font-medium">Soma de serviços ativos e concluídos.</span>
+                            </div>
+                        </div>
+
+                        <!-- CARD 3: STATUS DO PÁTIO -->
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status do Pátio</span>
+                                    <h2 id="metric-patio-total" class="text-4xl font-extrabold text-[#0B132B] mt-1">0 Carros</h2>
+                                </div>
+                                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 space-y-2 pt-4 border-t border-slate-50">
+                                <div class="flex justify-between items-center bg-amber-50/50 hover:bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-100 text-xs transition-colors">
+                                    <span class="text-amber-800 font-bold flex items-center gap-2">
+                                        <i class="fas fa-hourglass-half"></i> Fila de Espera
+                                    </span>
+                                    <span id="metric-patio-fila" class="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-bold">0</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-blue-50/50 hover:bg-blue-50 px-3.5 py-2 rounded-xl border border-blue-100 text-xs transition-colors">
+                                    <span class="text-blue-800 font-bold flex items-center gap-2">
+                                        <i class="fas fa-spinner fa-spin"></i> Em Andamento
+                                    </span>
+                                    <span id="metric-patio-progresso" class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TABELA DE GERENCIAMENTO EM TEMPO REAL -->
+                    <div class="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
+                            <div>
+                                <h3 class="font-bold text-lg text-[#0B132B]">Gestão do Fluxo de Pátio</h3>
+                                <p class="text-xs text-slate-400 mt-1">Acompanhe e mude os status das lavagens em andamento abaixo.</p>
+                            </div>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                                Painel Operacional
+                            </span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[450px]">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="sticky top-0 bg-slate-100 z-10">
+                                    <tr class="border-b border-slate-100 text-slate-500 text-[11px] uppercase font-bold tracking-wider">
+                                        <th class="px-6 py-4">Veículo / Placa</th>
+                                        <th class="px-6 py-4">Porte</th>
+                                        <th class="px-6 py-4">Cliente Associado</th>
+                                        <th class="px-6 py-4">Serviço & Extras</th>
+                                        <th class="px-6 py-4">Responsáveis</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-patio" class="divide-y divide-slate-100 text-sm text-slate-600">
+                                    <!-- Dinâmico JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ========================================== -->
+                <!-- ABA: CLIENTES                              -->
+                <!-- ========================================== -->
+                <div id="content-clientes" class="tab-content space-y-6 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Formulário de Cadastro de Clientes -->
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm lg:col-span-1 h-fit">
+                            <h3 class="text-lg font-bold text-[#0B132B] mb-1">Cadastrar Cliente</h3>
+                            <p class="text-xs text-slate-400 mb-6">Insira um novo cliente no sistema para vinculação de frotas e veículos.</p>
+                            
+                            <form id="form-cadastro-cliente" onsubmit="handleCadastroCliente(event)" class="space-y-4 text-sm">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">CPF (Único / Chave)</label>
+                                    <input type="text" id="cli-cpf" required placeholder="000.000.000-00" oninput="handleCPFInput(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome Completo</label>
+                                    <input type="text" id="cli-nome" required placeholder="Ex: Roberto Carlos" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">E-mail</label>
+                                    <input type="email" id="cli-email" required placeholder="Ex: roberto@gmail.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Telefone</label>
+                                    <input type="text" id="cli-telefone" required placeholder="Ex: (11) 99999-9999" oninput="handlePhoneInput(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Endereço</label>
+                                    <input type="text" id="cli-endereco" required placeholder="Ex: Av. Paulista, 1000 - SP" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                                </div>
+                                
+                                <button type="submit" class="w-full bg-[#0B132B] hover:bg-blue-600 text-white font-bold py-3 rounded-xl transition-all shadow-md">
+                                    Confirmar Cadastro
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Lista de Clientes Cadastrados com painel de busca integrado -->
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm lg:col-span-2">
+                            <h3 class="text-lg font-bold text-[#0B132B] mb-1">Clientes Cadastrados</h3>
+                            <p class="text-xs text-slate-400 mb-4">Busca, gerenciamento de contatos e controle de frotas associadas.</p>
+                            
+                            <!-- SEÇÃO DE BUSCA AVANÇADA -->
+                            <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro por Cliente (Nome / CPF)</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                            <i class="fas fa-search text-xs"></i>
+                                        </span>
+                                        <input type="text" id="search-cliente" oninput="updateAllData()" placeholder="Buscar por Nome ou CPF..." class="w-full pl-8 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-600">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtro por Veículo (Placa)</label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                            <i class="fas fa-car-side text-xs"></i>
+                                        </span>
+                                        <input type="text" id="search-placa" oninput="updateAllData()" placeholder="Digite a placa (Ex: BRA2E19)..." class="w-full pl-8 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-600 uppercase">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto max-h-[500px] border border-slate-100 rounded-xl">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead class="sticky top-0 bg-slate-100 z-10">
+                                        <tr class="border-b border-slate-100 text-slate-500 text-[11px] uppercase font-bold tracking-wider">
+                                            <th class="px-6 py-4">CPF</th>
+                                            <th class="px-6 py-4">Nome</th>
+                                            <th class="px-6 py-4">Contato / E-mail</th>
+                                            <th class="px-6 py-4">Endereço</th>
+                                            <th class="px-6 py-4 text-center">Frota de Veículos</th>
+                                            <th class="px-6 py-4 text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-clientes" class="divide-y divide-slate-100 text-sm text-slate-600">
+                                        <!-- Dinâmico JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- ABA: HISTÓRICO / RELATÓRIOS                -->
+                <!-- ========================================== -->
+                <div id="content-historico" class="tab-content space-y-6 hidden">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#0B132B]">Relatório Geral de Atendimentos</h3>
+                                <p class="text-sm text-slate-400 mt-1">Visualização retroativa e exportação de todas as lavagens registradas.</p>
+                            </div>
+                            <!-- Botões de Exportação Reais e Funcionais -->
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="exportToCSV()" class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2">
+                                    <i class="fas fa-file-csv text-emerald-600 text-sm"></i> Exportar Excel / CSV
+                                </button>
+                                <button onclick="exportToPDF()" class="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2">
+                                    <i class="fas fa-file-pdf text-rose-600 text-sm"></i> Exportar Relatório PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[550px] border border-slate-100 rounded-xl">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead class="sticky top-0 bg-slate-100 z-10">
+                                    <tr class="border-b border-slate-100 text-slate-500 text-[11px] uppercase font-bold tracking-wider">
+                                        <th class="px-6 py-4">ID</th>
+                                        <th class="px-6 py-4">Veículo</th>
+                                        <th class="px-6 py-4">Placa</th>
+                                        <th class="px-6 py-4">Cliente</th>
+                                        <th class="px-6 py-4">Serviço / Extras</th>
+                                        <th class="px-6 py-4">Valor Total</th>
+                                        <th class="px-6 py-4">Responsáveis</th>
+                                        <th class="px-6 py-4">Status Final</th>
+                                        <th class="px-6 py-4 text-center admin-action-header hidden">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-historico" class="divide-y divide-slate-100 text-sm text-slate-600">
+                                    <!-- Dinâmico JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- ABA: FUNCIONÁRIOS (COMISSÕES)              -->
+                <!-- ========================================== -->
+                <div id="content-funcionarios" class="tab-content space-y-6 hidden">
+                    <div id="restricao-funcionarios" class="hidden bg-rose-50 border border-rose-100 rounded-2xl p-6 flex gap-4 items-start text-rose-800">
+                        <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-lg shrink-0">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-base">Acesso Restrito</h4>
+                            <p class="text-sm text-rose-700/85 mt-1">Apenas administradores do Flex Wash podem visualizar e auditar o cálculo de comissões financeiras dos funcionários.</p>
+                        </div>
+                    </div>
+
+                    <div id="painel-comissoes-real" class="space-y-6">
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#0B132B]">Fechamento de Comissões</h3>
+                                <p class="text-sm text-slate-400 mt-1">Cálculo automatizado com base nos serviços atribuídos aos funcionários. Comissões divididas de forma justa quando houver mais de um operador por carro.</p>
+                            </div>
+                            
+                            <div id="grid-funcionarios-comissoes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- ABA: PAINEL DE CONTROLE (ADMIN ONLY)       -->
+                <!-- ========================================== -->
+                <div id="content-admin-config" class="tab-content space-y-6 hidden">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#0B132B] mb-1"><i class="fas fa-sliders-h text-blue-600 mr-1"></i> Painel Geral do Administrador</h3>
+                                <p class="text-sm text-slate-400">Cadastre, edite e remova marcas de carros, pacotes de lavagem, serviços adicionais e funcionários autorizados.</p>
+                            </div>
+                            <button onclick="restaurarDadosPadrao()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-200 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
+                                <i class="fas fa-undo-alt"></i> Restaurar Dados Padrão
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                            
+                            <!-- Coluna 1: Marcas e Funcionários -->
+                            <div class="space-y-6 border-b xl:border-b-0 xl:border-r border-slate-100 pb-6 xl:pb-0 xl:pr-6">
+                                <!-- Marcas de Veículos -->
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-bold text-sm text-[#0B132B] uppercase tracking-wider">Marcas Atendidas</h4>
+                                        <button onclick="openAdminAddModal('marca')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                            <i class="fas fa-plus"></i> Nova Marca
+                                        </button>
+                                    </div>
+                                    <div id="admin-brands-list" class="space-y-1.5 border border-slate-100 rounded-xl p-3 bg-slate-50/50 max-h-[220px] overflow-y-auto">
+                                        <!-- Dinâmico JS -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Funcionários -->
+                                <div class="space-y-4 pt-4 border-t border-slate-100">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-bold text-sm text-[#0B132B] uppercase tracking-wider">Operadores Ativos</h4>
+                                        <button onclick="openAdminAddModal('funcionario')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                            <i class="fas fa-plus"></i> Novo Operador
+                                        </button>
+                                    </div>
+                                    <div id="admin-staff-list" class="space-y-1.5 border border-slate-100 rounded-xl p-3 bg-slate-50/50 max-h-[220px] overflow-y-auto">
+                                        <!-- Dinâmico JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Coluna 2: Pacotes de Lavagem Progressivos e Extras -->
+                            <div class="xl:col-span-2 space-y-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-bold text-sm text-[#0B132B] uppercase tracking-wider">Valores de Lavagem Progressiva por Porte</h4>
+                                    <button onclick="openAdminAddModal('lavagem')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                        <i class="fas fa-plus"></i> Novo Pacote
+                                    </button>
+                                </div>
+                                <div id="admin-washes-list" class="space-y-3 pr-2 max-h-[280px] overflow-y-auto">
+                                    <!-- Dinâmico JS -->
+                                </div>
+
+                                <!-- Serviços Extras -->
+                                <div class="pt-6 border-t border-slate-100 space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-bold text-sm text-[#0B132B] uppercase tracking-wider">Serviços Adicionais (Extras)</h4>
+                                        <button onclick="openAdminAddModal('extra')" class="bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                            <i class="fas fa-plus"></i> Novo Adicional
+                                        </button>
+                                    </div>
+                                    <div id="admin-extras-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[200px] overflow-y-auto p-1">
+                                        <!-- Dinâmico JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- BOTÃO DE AÇÃO PRINCIPAL (DESTAQUE FLUTUANTE) -->
+            <button onclick="openModalCadastro()" class="fixed bottom-6 right-6 bg-[#0B132B] hover:bg-blue-600 text-white font-bold px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 text-sm z-30 transition-all hover:scale-105 active:scale-95 group border border-slate-800">
+                <span class="w-6 h-6 bg-sky-400 text-[#0B132B] rounded-full flex items-center justify-center text-xs transition-transform group-hover:rotate-90">
+                    <i class="fas fa-plus"></i>
+                </span>
+                <span>[ + Nova Lavagem ]</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE CADASTRO DE NOVA LAVAGEM          -->
+    <!-- ========================================== -->
+    <div id="modal-cadastro" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 overflow-y-auto p-4">
+        <div class="bg-white w-full max-w-3xl p-6 md:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 my-auto flex flex-col h-[85vh] max-h-[800px]">
+            
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-blue-600 text-xl"><i class="fas fa-file-invoice"></i></span>
+                    <h3 class="text-lg font-bold text-[#0B132B]">Iniciar Entrada de Veículos</h3>
+                </div>
+                <button onclick="closeModalCadastro()" class="text-slate-400 hover:text-slate-600 text-xl p-1 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Formulário com scroll isolado no centro e rodapé fixado -->
+            <form id="form-nova-lavagem" onsubmit="handleNovaLavagem(event)" class="flex-1 flex flex-col min-h-0 text-sm overflow-hidden">
+                
+                <!-- ÁREA DE CONTEÚDO ROLÁVEL -->
+                <div class="flex-1 overflow-y-auto pr-2 space-y-5 pb-4 scroll-smooth">
+                    <!-- VINCULAR CLIENTE EXISTENTE -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Cliente Associado</label>
+                        <select id="form-cliente" onchange="onCustomerChange()" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-medium text-slate-700">
+                            <!-- Clientes dinâmicos -->
+                        </select>
+                    </div>
+
+                    <!-- SELETOR DE VEÍCULOS DINÂMICOS DO CLIENTE -->
+                    <div id="form-selecao-veiculos-container" class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Selecione o(s) Veículo(s) para Entrada</label>
+                            <span class="text-[10px] bg-sky-50 text-sky-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide">Multi-Seleção Disponível</span>
+                        </div>
+                        <div id="form-veiculos-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 max-h-36 overflow-y-auto">
+                            <!-- Renderizado via JS -->
+                        </div>
+                        
+                        <!-- Botão de cadastro rápido caso o cliente não tenha o veículo ainda -->
+                        <button type="button" onclick="mostrarCadastroVeiculoRapido()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1.5 pt-1">
+                            <i class="fas fa-plus-circle"></i> + Adicionar Novo Veículo para este Cliente
+                        </button>
+                    </div>
+
+                    <!-- FORMULÁRIO DE CADASTRO RÁPIDO DE VEÍCULO (INLINE) -->
+                    <div id="form-veiculo-rapido" class="hidden p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3 mt-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-blue-900 uppercase flex items-center gap-1"><i class="fas fa-car-side"></i> Cadastrar Novo Veículo</span>
+                            <button type="button" onclick="ocultarCadastroVeiculoRapido()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">Cancelar</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Marca</label>
+                                <select id="rapido-marca" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white">
+                                    <!-- Marcas -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Modelo</label>
+                                <input type="text" id="rapido-modelo" placeholder="Ex: Onix" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Placa</label>
+                                <input type="text" id="rapido-placa" placeholder="ABC1D23" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 uppercase font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Cor</label>
+                                <input type="text" id="rapido-cor" placeholder="Ex: Prata" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase">Porte</label>
+                                <select id="rapido-porte" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white">
+                                    <option value="Pequeno">Pequeno</option>
+                                    <option value="Médio" selected>Médio</option>
+                                    <option value="Grande">Grande</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" onclick="salvarVeiculoRapido()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm">
+                            Confirmar Cadastro do Veículo
+                        </button>
+                    </div>
+
+                    <!-- CONFIGURAÇÃO ESPECÍFICA POR CARRO (DINÂMICO) -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Configurações Individuais de Serviços por Carro</label>
+                        <div id="individual-configs-container" class="space-y-4 p-1">
+                            <div class="text-center text-xs text-slate-400 py-12 font-medium bg-slate-50/50 border border-slate-100 rounded-2xl">
+                                <i class="fas fa-cogs text-2xl mb-2 text-slate-300 block"></i>
+                                Marque um ou mais carros acima para liberar a configuração individual.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA FIXADA NO RODAPÉ (PRE-VISUALIZACAO E VALOR DINAMICO) -->
+                <div class="shrink-0 pt-4 border-t border-slate-100 bg-white space-y-4">
+                    <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-blue-800 uppercase tracking-widest block">Extrato Consolidado</span>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Detalhamento dos custos por veículo ativo no pátio:</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block font-medium">Valor Total Geral</span>
+                                <h4 id="form-live-total" class="text-2xl font-black text-blue-600">R$ 0,00</h4>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista detalhada com quebra de valores unitários -->
+                        <div id="form-live-breakdown" class="text-xs border-t border-blue-200/40 pt-3 space-y-2 max-h-[110px] overflow-y-auto hidden">
+                            <!-- Inserido dinamicamente via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação do Modal -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" onclick="closeModalCadastro()" class="w-full py-3 border border-slate-200 rounded-xl text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="w-full py-3 bg-[#0B132B] hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-md">
+                            Confirmar Entrada Geral
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE CADASTRO/EDIÇÃO (ADMINISTRADOR)  -->
+    <!-- ========================================== -->
+    <div id="modal-admin-actions" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 flex flex-col max-h-[90vh]">
+            
+            <div class="flex justify-between items-center mb-5 shrink-0">
+                <h3 id="admin-modal-title" class="text-base font-bold text-[#0B132B]">Gerenciar</h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            
+            <form id="form-admin-action" onsubmit="handleAdminSubmit(event)" class="space-y-4 text-sm flex flex-col flex-1 overflow-hidden">
+                <div id="admin-modal-inputs" class="space-y-4 overflow-y-auto pr-2 flex-1 p-1"></div>
+                
+                <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 shrink-0">
+                    <button type="button" onclick="closeAdminModal()" class="w-full py-2.5 border border-slate-200 rounded-lg text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="w-full py-2.5 bg-[#0B132B] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors shadow-sm">
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE GERENCIAMENTO DE FROTA            -->
+    <!-- ========================================== -->
+    <div id="modal-gerenciar-frota" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-2xl p-6 md:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 my-auto flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-lg font-bold text-[#0B132B] flex items-center gap-2">
+                    <i class="fas fa-car text-blue-600"></i>
+                    <span>Gerenciar Frota de <span id="frota-cliente-nome" class="text-blue-600"></span></span>
+                </h3>
+                <button onclick="closeModalFrota()" class="text-slate-400 hover:text-slate-600 text-xl p-1">&times;</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto space-y-6 pr-2">
+                <!-- Lista de veículos cadastrados -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-3 tracking-wider">Veículos Registrados</h4>
+                    <div id="frota-lista-veiculos" class="space-y-2 max-h-[220px] overflow-y-auto p-1">
+                        <!-- Dinâmico JS -->
+                    </div>
+                </div>
+
+                <!-- Cadastro de novo veículo -->
+                <div class="border-t border-slate-100 pt-4">
+                    <h4 id="frota-form-title" class="text-xs font-bold uppercase text-slate-400 mb-3 tracking-wider">Cadastrar Novo Veículo na Frota</h4>
+                    <form id="form-frota-veiculo" onsubmit="handleSalvarVeiculoFrota(event)" class="space-y-4">
+                        <input type="hidden" id="frota-veiculo-id"> <!-- Para edição -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Marca</label>
+                                <select id="frota-marca" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    <!-- Marcas dinâmicas -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Modelo</label>
+                                <input type="text" id="frota-modelo" required placeholder="Ex: Compass" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Placa</label>
+                                <input type="text" id="frota-placa" required placeholder="ABC1D23" class="w-full px-3 py-2 border border-slate-200 rounded-xl uppercase font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cor</label>
+                                <input type="text" id="frota-cor" required placeholder="Ex: Preto" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Porte</label>
+                                <select id="frota-porte" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    <option value="Pequeno">Pequeno</option>
+                                    <option value="Médio" selected>Médio</option>
+                                    <option value="Grande">Grande</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex-1 shadow-sm">
+                                <span id="btn-frota-text">Adicionar Veículo</span>
+                            </button>
+                            <button type="button" id="btn-cancelar-edicao-veiculo" onclick="resetFrotaForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs transition-colors hidden">
+                                Cancelar Edição
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end shrink-0">
+                <button onclick="closeModalFrota()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition-colors">
+                    Fechar Janela
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE TRANSFERÊNCIA DE PROPRIETÁRIO     -->
+    <!-- ========================================== -->
+    <div id="modal-transferir-veiculo" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-[60] flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-2xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 my-auto">
+            <h3 class="text-sm font-bold text-[#0B132B] mb-3 flex items-center gap-2">
+                <i class="fas fa-exchange-alt text-blue-600"></i> Transferir Proprietário
+            </h3>
+            <p id="transferir-veiculo-info" class="text-xs text-slate-500 mb-4"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Selecione o Novo Dono</label>
+                    <select id="transferir-novo-dono" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-xs">
+                        <!-- Clientes dinâmicos -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="closeModalTransferir()" class="py-2 border border-slate-200 rounded-xl text-xs text-slate-500 font-bold hover:bg-slate-50">Cancelar</button>
+                    <button onclick="confirmarTransferencia()" class="py-2 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DETALHES DE LAVAGENS DO FUNCIONÁRIO   -->
+    <!-- ========================================== -->
+    <div id="modal-detalhes-lavagens-funcionario" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-lg p-6 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 my-auto flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-base font-bold text-[#0B132B] flex items-center gap-2">
+                    <i class="fas fa-list text-blue-600"></i>
+                    <span>Lavagens de <span id="detalhes-func-nome" class="text-blue-600"></span></span>
+                </h3>
+                <button onclick="closeModalDetalhesFuncionario()" class="text-slate-400 hover:text-slate-600 text-xl p-1 transition-colors">&times;</button>
+            </div>
+            
+            <div id="detalhes-func-lista" class="flex-1 overflow-y-auto space-y-3 p-1 max-h-[50vh]">
+                <!-- Preenchido via JS -->
+            </div>
+            
+            <div class="pt-4 border-t border-slate-100 flex justify-end shrink-0">
+                <button onclick="closeModalDetalhesFuncionario()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition-colors">
+                    Fechar Painel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE CONFIRMAÇÃO PERSONALIZADO (POPUP) -->
+    <!-- ========================================== -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-[#0B132B]/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white w-full max-w-sm p-6 rounded-2xl shadow-2xl transform scale-95 transition-transform duration-300 border border-slate-100 my-auto text-center">
+            <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="confirm-title" class="text-base font-bold text-[#0B132B] mb-2">Tem certeza?</h3>
+            <p id="confirm-message" class="text-xs text-slate-500 mb-6">Esta ação não poderá ser desfeita de forma automatizada pelo sistema.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="confirm-cancel-btn" onclick="closeConfirmModal()" class="py-2.5 border border-slate-200 rounded-xl text-xs text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-ok-btn" class="py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs hover:bg-rose-700 transition-colors">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LOGICA SCRIPT INTERATIVA                   -->
+    <!-- ========================================== -->
+    <script>
+        let loginProfile = 'admin'; // 'admin' ou 'staff'
+        let currentTab = 'inicio';
+
+        // Definição de dados padrão (Failsafe/Fallback)
+        const DEFAULT_BRANDS = ["Audi", "BMW", "Chevrolet", "Ford", "Fiat", "Honda", "Hyundai", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen", "Renault", "Jeep", "Peugeot"];
+        
+        const DEFAULT_BASE_WASHES = [
+            { id: 1, nome: "Lavagem Simples", precoP: 40.00, precoM: 50.00, precoG: 60.00, comissaoPct: 3.0, descricao: "Limpeza externa rápida com shampoo neutro, aspiração básica do carpete e aplicação de pretinho nos pneus." },
+            { id: 2, nome: "Lavagem Completa", precoP: 60.00, precoM: 75.00, precoG: 90.00, comissaoPct: 5.0, descricao: "Ducha de pré-lavagem, limpeza externa completa, higienização dos vidros, limpeza de painel, aspiração profunda e odorizador interno." },
+            { id: 3, nome: "Completa + Cera", precoP: 90.00, precoM: 110.00, precoG: 130.00, comissaoPct: 8.0, descricao: "Pacote completo com lavagem detalhada mais aplicação manual de cera protetora de alta performance, devolvendo o brilho e proteção à pintura." }
+        ];
+
+        const DEFAULT_EXTRA_SERVICES = [
+            { id: 1, nome: "Polimento Técnico", preco: 250.00, comissaoPct: 5.0, descricao: "Correção de pintura com remoção de microrriscos e marcas de água da chuva ácida." },
+            { id: 2, nome: "Higienização Detalhada", preco: 150.00, comissaoPct: 5.0, descricao: "Limpeza profunda de estofados, carpetes, portas e forro com extratora." },
+            { id: 3, nome: "Limpeza de Motor", preco: 80.00, comissaoPct: 5.0, descricao: "Limpeza segura do cofre com produtos adequados e finalização com verniz de motor." },
+            { id: 4, nome: "Cristalização de Vidros", preco: 50.00, comissaoPct: 5.0, descricao: "Aplicação de impermeabilizante repelente de água em todos os vidros do veículo." }
+        ];
+
+        const DEFAULT_OPERATORS = [
+            { id: 1, nome: "Marcos Souza", cargo: "Operador Sênior" },
+            { id: 2, nome: "Carlos Silva", cargo: "Operador Auxiliar" },
+            { id: 3, nome: "Juliana Lima", cargo: "Higienizadora Técnica" }
+        ];
+
+        const DEFAULT_CUSTOMERS = [
+            { id: 1, nome: "Guilherme de Andrade", email: "guilherme.andrade@gmail.com", telefone: "(11) 98765-4321", endereco: "Alameda Lorena, 150 - SP", cpf: "123.456.789-00" },
+            { id: 2, nome: "Patrícia Menezes", email: "patricia.m@outlook.com", telefone: "(11) 95544-3322", endereco: "Rua Augusta, 1020 - SP", cpf: "987.654.321-11" },
+            { id: 3, nome: "Enzo Fernandez", email: "enzo.f@gmail.com", telefone: "(11) 94444-1111", endereco: "Av. Brigadeiro, 2500 - SP", cpf: "111.222.333-44" }
+        ];
+
+        const DEFAULT_CLIENT_VEHICLES = [
+            { id: 1, clienteId: 1, marca: 'Audi', modelo: 'Q3', placa: 'BRA2E19', cor: 'Cinza', porte: 'Médio' },
+            { id: 2, clienteId: 2, marca: 'Honda', modelo: 'Civic', placa: 'ABC1234', cor: 'Preto', porte: 'Pequeno' },
+            { id: 3, clienteId: 3, marca: 'Toyota', modelo: 'Hilux', placa: 'XYZ9876', cor: 'Branco', porte: 'Grande' }
+        ];
+
+        const DEFAULT_VEHICLES = [
+            { 
+                id: 101, 
+                clienteId: 1, 
+                vehicleId: 1, 
+                baseWashId: 2, 
+                extrasIds: [2], 
+                responsaveisIds: [1, 2], 
+                valorTotal: 225.00, 
+                status: 'Em Andamento', 
+                dataInicio: '17/05/2026 15:00', 
+                dataConclusao: '-' 
+            },
+            { 
+                id: 102, 
+                clienteId: 2, 
+                vehicleId: 2, 
+                baseWashId: 1, 
+                extrasIds: [], 
+                responsaveisIds: [1], 
+                valorTotal: 40.00, 
+                status: 'Aguardando', 
+                dataInicio: '17/05/2026 15:15', 
+                dataConclusao: '-' 
+            },
+            { 
+                id: 103, 
+                clienteId: 3, 
+                vehicleId: 3, 
+                baseWashId: 3, 
+                extrasIds: [1, 3], 
+                responsaveisIds: [1, 2, 3], 
+                valorTotal: 460.00, 
+                status: 'Concluído', 
+                dataInicio: '17/05/2026 10:30', 
+                dataConclusao: '17/05/2026 12:45' 
+            }
+        ];
+
+        let brands = JSON.parse(localStorage.getItem('fw_brands')) || DEFAULT_BRANDS;
+        let baseWashes = JSON.parse(localStorage.getItem('fw_baseWashes')) || DEFAULT_BASE_WASHES;
+        let extraServices = JSON.parse(localStorage.getItem('fw_extraServices')) || DEFAULT_EXTRA_SERVICES;
+        let operators = JSON.parse(localStorage.getItem('fw_operators')) || DEFAULT_OPERATORS;
+        let customers = JSON.parse(localStorage.getItem('fw_customers')) || DEFAULT_CUSTOMERS;
+        let clientVehicles = JSON.parse(localStorage.getItem('fw_clientVehicles')) || DEFAULT_CLIENT_VEHICLES;
+        let vehicles = JSON.parse(localStorage.getItem('fw_vehicles')) || DEFAULT_VEHICLES;
+
+        // Variáveis auxiliares de controle dos modais de Frota
+        let activeFrotaClientId = null;
+        let activeTransferVehicleId = null;
+        let confirmActionCallback = null;
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem('fw_brands', JSON.stringify(brands));
+            localStorage.setItem('fw_baseWashes', JSON.stringify(baseWashes));
+            localStorage.setItem('fw_extraServices', JSON.stringify(extraServices));
+            localStorage.setItem('fw_operators', JSON.stringify(operators));
+            localStorage.setItem('fw_customers', JSON.stringify(customers));
+            localStorage.setItem('fw_clientVehicles', JSON.stringify(clientVehicles));
+            localStorage.setItem('fw_vehicles', JSON.stringify(vehicles));
+        }
+
+        function restaurarDadosPadrao() {
+            showConfirm('Restaurar Fábrica', 'Tem certeza de que deseja apagar todos os dados inseridos e restaurar os dados originais da demonstração?', () => {
+                brands = [...DEFAULT_BRANDS];
+                baseWashes = [...DEFAULT_BASE_WASHES];
+                extraServices = [...DEFAULT_EXTRA_SERVICES];
+                operators = [...DEFAULT_OPERATORS];
+                customers = [...DEFAULT_CUSTOMERS];
+                clientVehicles = [...DEFAULT_CLIENT_VEHICLES];
+                vehicles = [...DEFAULT_VEHICLES];
+                
+                saveStateToLocalStorage();
+                updateAllData();
+                showToast("Sistema reiniciado para os padrões com sucesso!");
+                if (currentTab === 'admin-config') {
+                    setActiveTab('inicio');
+                }
+            });
+        }
+
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            confirmActionCallback = callback;
+
+            const modal = document.getElementById('modal-confirmacao');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('modal-confirmacao');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+            confirmActionCallback = null;
+        }
+
+        // Listener para o botão de confirmação do modal
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            if (confirmActionCallback) {
+                confirmActionCallback();
+            }
+            closeConfirmModal();
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-[#0B132B] border-sky-500' : 'bg-red-600 border-red-800';
+            const icon = type === 'success' ? 'fa-check-circle text-sky-400' : 'fa-exclamation-circle text-white';
+
+            toast.className = `flex items-center gap-3 text-white text-sm font-semibold px-4 py-3 rounded-xl shadow-2xl border-l-4 ${bgColor} transition-all duration-300 transform translate-y-5 opacity-0 pointer-events-auto z-[110]`;
+            toast.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => { toast.classList.remove('translate-y-5', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function formatCPF(value) {
+            return value
+                .replace(/\D/g, "")
+                .replace(/(\d{3})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d)/, "$1.$2")
+                .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+                .replace(/(-\d{2})\d+?$/, "$1");
+        }
+
+        function handleCPFInput(el) {
+            el.value = formatCPF(el.value);
+        }
+
+        function formatPhone(value) {
+            return value
+                .replace(/\D/g, "")
+                .replace(/^(\d{2})(\d)/g, "($1) $2")
+                .replace(/(\d{5})(\d)/, "$1-$2")
+                .replace(/(-\d{4})\d+?$/, "$1");
+        }
+
+        function handlePhoneInput(el) {
+            el.value = formatPhone(el.value);
+        }
+
+        function setLoginProfile(profile) {
+            loginProfile = profile;
+            const tabAdmin = document.getElementById('tab-admin');
+            const tabStaff = document.getElementById('tab-staff');
+            const userField = document.getElementById('login-user');
+
+            if (profile === 'admin') {
+                tabAdmin.className = "py-2.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-sm flex items-center justify-center gap-2";
+                tabStaff.className = "py-2.5 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2";
+                userField.value = "admin@flexwash.com";
+            } else {
+                tabStaff.className = "py-2.5 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-sm flex items-center justify-center gap-2";
+                tabAdmin.className = "py-2.5 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2";
+                userField.value = "funcionario@flexwash.com";
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const emailInput = document.getElementById('login-user').value.trim().toLowerCase();
+            
+            if (loginProfile === 'admin') {
+                if (emailInput !== 'admin@flexwash.com') {
+                    showToast("E-mail incorreto! O e-mail padrão do Administrador é: admin@flexwash.com", "error");
+                    return;
+                }
+            } else {
+                if (emailInput !== 'funcionario@flexwash.com') {
+                    showToast("E-mail incorreto! O e-mail padrão do Funcionário é: funcionario@flexwash.com", "error");
+                    return;
+                }
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+
+            const nameElement = document.getElementById('user-name');
+            const roleElement = document.getElementById('user-role');
+            const navAdminTab = document.getElementById('admin-only-nav');
+            const horizAdminTab = document.getElementById('tab-btn-horiz-admin-config');
+            const comissoesAba = document.getElementById('restricao-funcionarios');
+            const comissoesPainel = document.getElementById('painel-comissoes-real');
+
+            if (loginProfile === 'admin') {
+                nameElement.innerText = "Gustavo Melo";
+                roleElement.innerText = "Administrador";
+                navAdminTab.classList.remove('hidden');
+                horizAdminTab.classList.remove('hidden');
+                comissoesAba.classList.add('hidden');
+                comissoesPainel.classList.remove('hidden');
+            } else {
+                nameElement.innerText = "Marcos Souza";
+                roleElement.innerText = "Operador Pátio";
+                navAdminTab.classList.add('hidden');
+                horizAdminTab.classList.add('hidden');
+                comissoesAba.classList.remove('hidden');
+                comissoesPainel.classList.add('hidden');
+                if (currentTab === 'admin-config') {
+                    setActiveTab('inicio');
+                }
+            }
+
+            showToast("Sessão iniciada com sucesso!");
+            updateAllData();
+        }
+
+        function logout() {
+            document.getElementById('app-layout').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            showToast("Você encerrou sua sessão.");
+        }
+
+        function setActiveTab(tabId) {
+            if (tabId === 'admin-config' && loginProfile !== 'admin') {
+                showToast("Área restrita! Apenas administradores podem acessar esta seção.", "error");
+                setActiveTab('inicio');
+                return;
+            }
+
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(content => { content.classList.add('hidden'); });
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+            const tabs = ['inicio', 'clientes', 'historico', 'funcionarios', 'admin-config'];
+            tabs.forEach(id => {
+                const btn = document.getElementById(`tab-btn-${id}`);
+                if (btn) btn.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-left justify-start";
+            });
+            const activeSidebarBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeSidebarBtn) activeSidebarBtn.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all text-blue-600 bg-blue-50/75 border-r-4 border-blue-600 text-left justify-start";
+
+            tabs.forEach(id => {
+                const btn = document.getElementById(`tab-btn-horiz-${id}`);
+                if (btn) btn.className = "flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50";
+            });
+            const activeHorizBtn = document.getElementById(`tab-btn-horiz-${tabId}`);
+            if (activeHorizBtn) activeHorizBtn.className = "flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/10";
+
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                overlay.classList.add('hidden');
+            } else {
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        function handleCadastroCliente(event) {
+            event.preventDefault();
+            const cpf = document.getElementById('cli-cpf').value.trim();
+            const nome = document.getElementById('cli-nome').value;
+            const email = document.getElementById('cli-email').value;
+            const telefone = document.getElementById('cli-telefone').value;
+            const address = document.getElementById('cli-endereco').value;
+
+            // Validação de CPF Único
+            const duplicated = customers.some(c => c.cpf === cpf);
+            if (duplicated) {
+                showToast(`Erro! Já existe um cliente cadastrado com o CPF: ${cpf}`, "error");
+                return;
+            }
+
+            const novoCliente = {
+                id: Date.now(),
+                cpf: cpf,
+                nome: nome,
+                email: email,
+                telefone: telefone,
+                endereco: address
+            };
+
+            customers.push(novoCliente);
+            saveStateToLocalStorage();
+            document.getElementById('form-cadastro-cliente').reset();
+            updateAllData();
+            showToast(`Cliente ${nome} cadastrado com sucesso!`);
+        }
+
+        function deleteCustomer(id) {
+            if (loginProfile !== 'admin') {
+                showToast("Ação permitida apenas para Administradores.", "error");
+                return;
+            }
+            
+            showConfirm('Excluir Cliente', 'Tem certeza de que deseja remover este cliente? Todos os veículos vinculados a ele serão excluídos permanentemente!', () => {
+                clientVehicles = clientVehicles.filter(v => v.clienteId !== id);
+                customers = customers.filter(c => c.id !== id);
+                saveStateToLocalStorage();
+                showToast("Cliente e seus veículos foram excluídos.");
+                updateAllData();
+            });
+        }
+
+        function updateLiveCalculation() {
+            const containerConfigs = document.getElementById('individual-configs-container');
+            const totalDisplay = document.getElementById('form-live-total');
+            const breakdownDisplay = document.getElementById('form-live-breakdown');
+            if (!containerConfigs || !totalDisplay || !breakdownDisplay) return;
+
+            const checkedCheckboxes = document.querySelectorAll('.form-veiculo-checkbox:checked');
+            let total = 0;
+            let breakdownHtml = '';
+
+            checkedCheckboxes.forEach(cb => {
+                const vehId = parseInt(cb.getAttribute('data-id'));
+                const vehicle = clientVehicles.find(v => v.id === vehId);
+                
+                if (vehicle) {
+                    // Pegar a lavagem selecionada especificamente para este carro
+                    const washSelect = document.getElementById(`wash-select-veh-${vehId}`);
+                    let selectedWashId = washSelect ? parseInt(washSelect.value) : (baseWashes[0] ? baseWashes[0].id : null);
+                    const selectedWash = baseWashes.find(w => w.id === selectedWashId);
+
+                    let valorBase = 0;
+                    if (selectedWash) {
+                        if (vehicle.porte === 'Pequeno') valorBase = selectedWash.precoP;
+                        else if (vehicle.porte === 'Médio') valorBase = selectedWash.precoM;
+                        else if (vehicle.porte === 'Grande') valorBase = selectedWash.precoG;
+                    }
+
+                    // Somar os extras selecionados especificamente para este carro
+                    let valorExtras = 0;
+                    let selectedExtrasList = [];
+                    const extraCbs = document.querySelectorAll(`.extra-cb-veh-${vehId}:checked`);
+                    extraCbs.forEach(ecb => {
+                        const extraId = parseInt(ecb.getAttribute('data-extra-id'));
+                        const extra = extraServices.find(e => e.id === extraId);
+                        if (extra) {
+                            valorExtras += extra.preco;
+                            selectedExtrasList.push(`${extra.nome} (+ R$ ${extra.preco.toFixed(2)})`);
+                        }
+                    });
+
+                    const subtotal = valorBase + valorExtras;
+                    total += subtotal;
+
+                    // Construção do Extrato Detalhado do Carro
+                    breakdownHtml += `
+                        <div class="flex flex-col gap-0.5 pb-2 border-b border-blue-100/40 last:border-0 last:pb-0">
+                            <div class="flex justify-between items-center text-slate-800 font-bold text-xs">
+                                <span><i class="fas fa-car text-blue-500 mr-1 text-[10px]"></i> ${vehicle.marca} ${vehicle.modelo} <span class="text-[9px] text-slate-400 font-mono font-normal">(${vehicle.placa})</span></span>
+                                <span class="text-blue-600 font-mono">R$ ${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 pl-4 flex justify-between">
+                                <span>• ${selectedWash ? selectedWash.nome : 'Sem Lavagem Base'} (${vehicle.porte})</span>
+                                <span class="font-mono">R$ ${valorBase.toFixed(2)}</span>
+                            </div>
+                            ${selectedExtrasList.map(extraItem => `
+                                <div class="text-[10px] text-slate-400 pl-4 flex justify-between">
+                                    <span>• ${extraItem.split(' (+')[0]}</span>
+                                    <span class="font-mono">+ R$ ${parseFloat(extraItem.split('R$ ')[1].replace(')', '')).toFixed(2)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            });
+
+            totalDisplay.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+            
+            if (breakdownHtml !== '') {
+                breakdownDisplay.innerHTML = breakdownHtml;
+                breakdownDisplay.classList.remove('hidden');
+            } else {
+                breakdownDisplay.innerHTML = '';
+                breakdownDisplay.classList.add('hidden');
+            }
+        }
+
+        function renderIndividualConfigs() {
+            const container = document.getElementById('individual-configs-container');
+            if (!container) return;
+
+            const checkedCheckboxes = document.querySelectorAll('.form-veiculo-checkbox:checked');
+            
+            if (checkedCheckboxes.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-xs text-slate-400 py-12 font-medium bg-slate-50/50 border border-slate-100 rounded-2xl">
+                        <i class="fas fa-cogs text-2xl mb-2 text-slate-300 block"></i>
+                        Marque um ou mais carros acima para liberar a configuração individual.
+                    </div>
+                `;
+                updateLiveCalculation();
+                return;
+            }
+
+            let html = '';
+            checkedCheckboxes.forEach(cb => {
+                const vehId = parseInt(cb.getAttribute('data-id'));
+                const vehicle = clientVehicles.find(v => v.id === vehId);
+
+                if (vehicle) {
+                    // Geração dos selects de Lavagem Base adaptados ao porte do carro
+                    const washOptions = baseWashes.map(w => {
+                        let precoPorte = vehicle.porte === 'Pequeno' ? w.precoP : (vehicle.porte === 'Médio' ? w.precoM : w.precoG);
+                        return `<option value="${w.id}">${w.nome} - R$ ${precoPorte.toFixed(2)}</option>`;
+                    }).join('');
+
+                    // Geração dos adicionais (extras) de forma inline
+                    const extrasHtml = extraServices.map(e => `
+                        <label class="flex items-center gap-1.5 p-1.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors select-none text-[11px] font-semibold text-slate-600">
+                            <input type="checkbox" data-extra-id="${e.id}" class="extra-cb-veh-${vehId} text-blue-600 rounded focus:ring-blue-500 w-3.5 h-3.5" onchange="updateLiveCalculation()">
+                            <span>${e.nome} (+ R$ ${e.preco.toFixed(2)})</span>
+                        </label>
+                    `).join('');
+
+                    // Geração dos operadores responsáveis exclusivos por esse carro
+                    const operatorsHtml = operators.map(op => `
+                        <label class="flex items-center gap-1.5 p-1.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors select-none text-[11px] font-semibold text-slate-600">
+                            <input type="checkbox" data-operator-id="${op.id}" class="operator-cb-veh-${vehId} text-blue-600 rounded focus:ring-blue-500 w-3.5 h-3.5">
+                            <span>${op.nome}</span>
+                        </label>
+                    `).join('');
+
+                    html += `
+                        <div class="bg-white border border-slate-150 rounded-2xl p-4 space-y-3 shadow-sm hover:border-blue-300 transition-all">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <i class="fas fa-car text-blue-500 text-xs"></i>
+                                    ${vehicle.marca} ${vehicle.modelo} 
+                                    <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">${vehicle.porte}</span>
+                                </span>
+                                <span class="text-xs font-bold text-slate-400 font-mono">${vehicle.placa}</span>
+                            </div>
+                            
+                            <!-- Serviço Base do Carro -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Serviço de Lavagem Base</label>
+                                <select id="wash-select-veh-${vehId}" onchange="updateLiveCalculation()" class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-slate-700">
+                                    ${washOptions}
+                                </select>
+                            </div>
+
+                            <!-- Extras para o Carro -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Serviços Adicionais (Extras) deste Carro</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                    ${extrasHtml}
+                                </div>
+                            </div>
+
+                            <!-- Responsáveis por este carro -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Funcionários Responsáveis (Atribuídos a este Carro)</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                                    ${operatorsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+            updateLiveCalculation();
+        }
+
+        function onCustomerChange() {
+            const clienteId = parseInt(document.getElementById('form-cliente').value);
+            const container = document.getElementById('form-veiculos-checkboxes');
+            if (!container) return;
+
+            const vehiclesOfClient = clientVehicles.filter(v => v.clienteId === clienteId);
+
+            if (vehiclesOfClient.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center text-xs text-slate-400 py-6 font-semibold">
+                        <i class="fas fa-car-crash text-lg text-slate-300 block mb-1"></i>
+                        Este cliente não possui veículos cadastrados na frota.
+                    </div>
+                `;
+            } else {
+                container.innerHTML = vehiclesOfClient.map(v => `
+                    <label class="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400 transition-all select-none">
+                        <input type="checkbox" data-id="${v.id}" class="form-veiculo-checkbox text-blue-600 rounded focus:ring-blue-500 w-4 h-4" onchange="renderIndividualConfigs()">
+                        <div class="text-left flex-1">
+                            <div class="text-xs font-bold text-slate-800">${v.marca} ${v.modelo}</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">${v.placa} • ${v.cor} • ${v.porte}</div>
+                        </div>
+                    </label>
+                `).join('');
+            }
+            ocultarCadastroVeiculoRapido();
+            renderIndividualConfigs();
+        }
+
+        function mostrarCadastroVeiculoRapido() {
+            const formRapido = document.getElementById('form-veiculo-rapido');
+            const selectMarca = document.getElementById('rapido-marca');
+            
+            selectMarca.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+            formRapido.classList.remove('hidden');
+        }
+
+        function ocultarCadastroVeiculoRapido() {
+            const formRapido = document.getElementById('form-veiculo-rapido');
+            formRapido.classList.add('hidden');
+            
+            document.getElementById('rapido-modelo').value = '';
+            document.getElementById('rapido-placa').value = '';
+            document.getElementById('rapido-cor').value = '';
+        }
+
+        function salvarVeiculoRapido() {
+            const clienteId = parseInt(document.getElementById('form-cliente').value);
+            const marca = document.getElementById('rapido-marca').value;
+            const modelo = document.getElementById('rapido-modelo').value.trim();
+            const placa = document.getElementById('rapido-placa').value.trim().toUpperCase();
+            const cor = document.getElementById('rapido-cor').value.trim();
+            const porte = document.getElementById('rapido-porte').value;
+
+            if (!modelo || !placa || !cor) {
+                showToast("Por favor, preencha todos os campos do veículo rápido.", "error");
+                return;
+            }
+
+            const novoVeiculo = {
+                id: Date.now(),
+                clienteId: clienteId,
+                marca: marca,
+                modelo: modelo,
+                placa: placa,
+                cor: cor,
+                porte: porte
+            };
+
+            clientVehicles.push(novoVeiculo);
+            saveStateToLocalStorage();
+            showToast(`${modelo} cadastrado e adicionado à frota!`);
+            onCustomerChange();
+            updateAllData();
+        }
+
+        function openModalCadastro() {
+            const modal = document.getElementById('modal-cadastro');
+            
+            const selectCliente = document.getElementById('form-cliente');
+            selectCliente.innerHTML = customers.map(c => `<option value="${c.id}">${c.nome} (${c.cpf})</option>`).join('');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                onCustomerChange();
+            }, 10);
+        }
+
+        function closeModalCadastro() {
+            const modal = document.getElementById('modal-cadastro');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            document.getElementById('form-nova-lavagem').reset();
+            ocultarCadastroVeiculoRapido();
+        }
+
+        function handleNovaLavagem(event) {
+            event.preventDefault();
+
+            const clienteId = parseInt(document.getElementById('form-cliente').value);
+            const checkedVehicles = document.querySelectorAll('.form-veiculo-checkbox:checked');
+
+            if (checkedVehicles.length === 0) {
+                showToast("Por favor, selecione ao menos um veículo para entrada.", "error");
+                return;
+            }
+
+            let valid = true;
+            let totalAtendimentosCriados = 0;
+
+            checkedVehicles.forEach(cb => {
+                const vehicleId = parseInt(cb.getAttribute('data-id'));
+                const vehicle = clientVehicles.find(v => v.id === vehicleId);
+
+                if (vehicle) {
+                    // Capturar a lavagem específica configurada para esse carro
+                    const washSelect = document.getElementById(`wash-select-veh-${vehicleId}`);
+                    const baseWashId = washSelect ? parseInt(washSelect.value) : null;
+                    const selectedWash = baseWashes.find(w => w.id === baseWashId);
+
+                    // Capturar extras específicos deste carro
+                    const extrasIds = [];
+                    const extraCbs = document.querySelectorAll(`.extra-cb-veh-${vehicleId}:checked`);
+                    extraCbs.forEach(ecb => {
+                        extrasIds.push(parseInt(ecb.getAttribute('data-extra-id')));
+                    });
+
+                    // Capturar operadores exclusivos deste carro
+                    const responsaveisIds = [];
+                    const opCbs = document.querySelectorAll(`.operator-cb-veh-${vehicleId}:checked`);
+                    opCbs.forEach(opcb => {
+                        responsaveisIds.push(parseInt(opcb.getAttribute('data-operator-id')));
+                    });
+
+                    if (responsaveisIds.length === 0) {
+                        showToast(`Erro: Adicione ao menos um funcionário para o veículo ${vehicle.marca} ${vehicle.modelo}.`, "error");
+                        valid = false;
+                        return;
+                    }
+
+                    if (selectedWash) {
+                        let valorBase = vehicle.porte === 'Pequeno' ? selectedWash.precoP : (vehicle.porte === 'Médio' ? selectedWash.precoM : selectedWash.precoG);
+                        let valorExtras = 0;
+                        extrasIds.forEach(id => {
+                            const extra = extraServices.find(e => e.id === id);
+                            if (extra) valorExtras += extra.preco;
+                        });
+                        const valorTotal = valorBase + valorExtras;
+
+                        const now = new Date();
+                        const formattedNow = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                        const novoAtendimento = {
+                            id: Date.now() + Math.floor(Math.random() * 1000),
+                            clienteId: clienteId,
+                            vehicleId: vehicleId,
+                            baseWashId: baseWashId,
+                            extrasIds: [...extrasIds],
+                            responsaveisIds: [...responsaveisIds],
+                            valorTotal: valorTotal,
+                            status: 'Aguardando',
+                            dataInicio: formattedNow,
+                            dataConclusao: '-'
+                        };
+
+                        vehicles.push(novoAtendimento);
+                        totalAtendimentosCriados++;
+                    }
+                }
+            });
+
+            if (!valid) return;
+
+            saveStateToLocalStorage();
+            closeModalCadastro();
+            updateAllData();
+            showToast(`${totalAtendimentosCriados} veículo(s) adicionados ao pátio com sucesso!`);
+        }
+
+        function advanceStatus(id) {
+            const vehicle = vehicles.find(v => v.id === id);
+            if (vehicle) {
+                const vehicleDetail = clientVehicles.find(v => v.id === vehicle.vehicleId) || { modelo: "Veículo" };
+                
+                let currentStatus = vehicle.status;
+                let nextStatus = currentStatus === 'Aguardando' ? 'Em Andamento' : 'Concluído';
+                
+                showConfirm('Avançar Status', `Deseja alterar o status do veículo ${vehicleDetail.modelo} de "${currentStatus}" para "${nextStatus}"?`, () => {
+                    const now = new Date();
+                    const formattedNow = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    if (vehicle.status === 'Aguardando') {
+                        vehicle.status = 'Em Andamento';
+                        vehicle.dataInicio = formattedNow;
+                        showToast(`${vehicleDetail.modelo} entrou em lavagem.`);
+                    } else if (vehicle.status === 'Em Andamento') {
+                        vehicle.status = 'Concluído';
+                        vehicle.dataConclusao = formattedNow;
+                        showToast(`${vehicleDetail.modelo} concluído!`);
+                    }
+                    saveStateToLocalStorage();
+                    updateAllData();
+                });
+            }
+        }
+
+        function deleteWash(id) {
+            if (loginProfile !== 'admin') {
+                showToast("Somente administradores podem excluir registros.", "error");
+                return;
+            }
+            showConfirm('Excluir Atendimento', 'Tem certeza de que deseja remover definitivamente este registro de lavagem do sistema?', () => {
+                vehicles = vehicles.filter(v => v.id !== id);
+                saveStateToLocalStorage();
+                showToast("Registro removido.");
+                updateAllData();
+            });
+        }
+
+        function exportToPDF() {
+            if (vehicles.length === 0) {
+                showToast("Nenhum atendimento registrado para exportar.", "error");
+                return;
+            }
+
+            showToast("Gerando relatório em PDF...");
+
+            const element = document.createElement('div');
+            element.style.padding = '24px';
+            element.style.fontFamily = "'Inter', sans-serif";
+            element.style.color = '#1e293b';
+            element.className = "bg-white";
+
+            const now = new Date();
+            const dataEmissao = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const totalFaturamento = vehicles
+                .filter(v => v.status === 'Concluído' || v.status === 'Em Andamento')
+                .reduce((acc, curr) => acc + curr.valorTotal, 0);
+            const faturamentoFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalFaturamento);
+            
+            const totalCarros = vehicles.length;
+            const concluidos = vehicles.filter(v => v.status === 'Concluído').length;
+            const emAndamento = vehicles.filter(v => v.status === 'Em Andamento').length;
+
+            element.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 24px;">
+                    <div>
+                        <h1 style="font-size: 26px; font-weight: 800; color: #0b132b; margin: 0; letter-spacing: -0.05em;">FLEX WASH</h1>
+                        <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Relatório Geral de Atendimentos & Estética Automotiva</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 11px; color: #475569; margin: 0;">Emitido em: <strong>${dataEmissao}</strong></p>
+                        <p style="font-size: 9px; color: #94a3b8; margin: 2px 0 0 0;">Controle Administrativo • Gestão Interna</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
+                        <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">FATURAMENTO CONSOLIDADO</span>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #10b981; margin: 4px 0 0 0;">${faturamentoFormatado}</h2>
+                    </div>
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
+                        <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">VEÍCULOS REGISTRADOS</span>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #3b82f6; margin: 4px 0 0 0;">${totalCarros} veículo(s)</h2>
+                    </div>
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
+                        <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">PRODUÇÃO DO PÁTIO</span>
+                        <h2 style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 8px 0 0 0;">
+                            ${concluidos} Concluídos <span style="color: #cbd5e1; font-weight: 400;">|</span> ${emAndamento} Ativos
+                        </h2>
+                    </div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
+                    <thead>
+                        <tr style="background-color: #0b132b; color: #ffffff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em;">
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Código</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Carro & Frota</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Cliente / CPF</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Serviços Atribuídos</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Responsáveis</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Data Entrada / Saída</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b;">Valor Total</th>
+                            <th style="padding: 10px; border: 1px solid #1e293b; text-align: center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${vehicles.map(veh => {
+                            const clienteObj = customers.find(c => c.id === veh.clienteId) || { nome: "Consumidor Final", cpf: "-" };
+                            const washObj = baseWashes.find(w => w.id === veh.baseWashId) || { nome: "Serviço Avulso" };
+                            const vehObj = clientVehicles.find(v => v.id === veh.vehicleId) || { marca: "Modelo", modelo: "Desconhecido", placa: "S/Placa", porte: "Médio", cor: "Cinza" };
+                            
+                            const extras = veh.extrasIds.map(id => {
+                                const ext = extraServices.find(e => e.id === id);
+                                return ext ? ext.nome : '';
+                            }).filter(Boolean).join(', ') || 'Nenhum';
+
+                            const responsaveis = veh.responsaveisIds.map(id => {
+                                const o = operators.find(op => op.id === id);
+                                return o ? o.nome : '';
+                            }).filter(Boolean).join(', ');
+
+                            const badgeColor = veh.status === 'Concluído' 
+                                ? 'background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' 
+                                : 'background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;';
+
+                            return `
+                                <tr style="border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
+                                    <td style="padding: 10px; font-family: monospace; color: #64748b; border: 1px solid #e2e8f0; font-weight: bold;">#${veh.id}</td>
+                                    <td style="padding: 10px; font-weight: bold; border: 1px solid #e2e8f0;">
+                                        ${vehObj.marca} ${vehObj.modelo}<br>
+                                        <span style="font-size: 8.5px; color: #64748b; font-family: monospace; font-weight: normal;">${vehObj.placa} • ${vehObj.cor} • ${vehObj.porte}</span>
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid #e2e8f0;">
+                                        <span style="font-weight: 600;">${clienteObj.nome}</span><br>
+                                        <span style="font-size: 8.5px; color: #64748b; font-family: monospace;">CPF: ${clienteObj.cpf || '-'}</span>
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid #e2e8f0;">
+                                        <strong>${washObj.nome}</strong><br>
+                                        <span style="font-size: 9px; color: #64748b;">Adicionais: ${extras}</span>
+                                    </td>
+                                    <td style="padding: 10px; color: #475569; border: 1px solid #e2e8f0;">${responsaveis}</td>
+                                    <td style="padding: 10px; font-size: 9.5px; color: #475569; border: 1px solid #e2e8f0; line-height: 1.3;">
+                                        Entrada: <strong>${veh.dataInicio}</strong><br>
+                                        Saída: <strong>${veh.dataConclusao}</strong>
+                                    </td>
+                                    <td style="padding: 10px; font-weight: bold; color: #0f172a; border: 1px solid #e2e8f0; font-family: monospace; font-size: 12px;">
+                                        R$ ${veh.valorTotal.toFixed(2)}
+                                    </td>
+                                    <td style="padding: 10px; text-align: center; border: 1px solid #e2e8f0;">
+                                        <span style="font-size: 8px; font-weight: bold; border-radius: 4px; padding: 4px 8px; text-transform: uppercase; ${badgeColor}">
+                                            ${veh.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 35px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px; font-weight: 500;">
+                    Documento extraído de forma eletrônica direto do terminal de monitoramento Flex Wash. Todos os direitos reservados.
+                </div>
+            `;
+
+            const opt = {
+                margin:       10,
+                filename:     `relatorio-atendimentos-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().from(element).set(opt).save()
+                .then(() => {
+                    showToast("Relatório PDF baixado com sucesso!");
+                })
+                .catch((err) => {
+                    console.error("PDF Render Error:", err);
+                    showToast("Falha ao gerar o PDF. Verifique os dados da tabela.", "error");
+                });
+        }
+
+        function exportToCSV() {
+            if (vehicles.length === 0) {
+                showToast("Nenhum atendimento registrado para exportar.", "error");
+                return;
+            }
+
+            showToast("Gerando planilha CSV...");
+
+            let csvContent = "\uFEFF"; 
+            csvContent += "ID Atendimento;Veículo;Placa;Cor;Porte;Cliente;CPF;Serviço Base;Adicionais;Valor Total;Responsáveis;Entrada;Conclusão;Status\n";
+
+            vehicles.forEach(veh => {
+                const clienteObj = customers.find(c => c.id === veh.clienteId) || { nome: "Consumidor Final", cpf: "" };
+                const washObj = baseWashes.find(w => w.id === veh.baseWashId) || { nome: "Serviço Avulso" };
+                const vehObj = clientVehicles.find(v => v.id === veh.vehicleId) || { marca: "Modelo", modelo: "Desconhecido", placa: "S/Placa", porte: "Médio", cor: "Cinza" };
+                
+                const extras = veh.extrasIds.map(id => {
+                    const ext = extraServices.find(e => e.id === id);
+                    return ext ? ext.nome : '';
+                }).filter(Boolean).join(', ') || 'Nenhum';
+
+                const responsaveis = veh.responsaveisIds.map(id => {
+                    const o = operators.find(op => op.id === id);
+                    return o ? o.nome : '';
+                }).filter(Boolean).join(', ');
+
+                const row = [
+                    veh.id,
+                    `${vehObj.marca} ${vehObj.modelo}`,
+                    vehObj.placa,
+                    vehObj.cor,
+                    vehObj.porte,
+                    clienteObj.nome,
+                    clienteObj.cpf || "",
+                    washObj.nome,
+                    extras,
+                    veh.valorTotal.toFixed(2).replace('.', ','),
+                    responsaveis,
+                    veh.dataInicio,
+                    veh.dataConclusao,
+                    veh.status
+                ].map(val => `"${val.toString().replace(/"/g, '""')}"`).join(";");
+
+                csvContent += row + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            const now = new Date();
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `relatorio-atendimentos-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("Planilha CSV baixada com sucesso!");
+        }
+
+        function openModalFrota(clienteId) {
+            activeFrotaClientId = clienteId;
+            const client = customers.find(c => c.id === clienteId);
+            if (!client) return;
+
+            document.getElementById('frota-cliente-nome').innerText = client.nome;
+            
+            const selectMarca = document.getElementById('frota-marca');
+            selectMarca.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+
+            renderFrotaVeiculos();
+            resetFrotaForm();
+
+            const modal = document.getElementById('modal-gerenciar-frota');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModalFrota() {
+            const modal = document.getElementById('modal-gerenciar-frota');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            activeFrotaClientId = null;
+        }
+
+        function renderFrotaVeiculos() {
+            const listContainer = document.getElementById('frota-lista-veiculos');
+            const clientVehs = clientVehicles.filter(v => v.clienteId === activeFrotaClientId);
+
+            if (clientVehs.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center text-xs text-slate-400 py-6 font-semibold">
+                        Este cliente ainda não possui veículos na frota. Cadastre um abaixo!
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = clientVehs.map(v => `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 border border-slate-100 p-3 rounded-xl gap-3">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800">${v.marca} ${v.modelo}</span>
+                            <div class="flex gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                                <span>Placa: ${v.placa}</span>
+                                <span>•</span>
+                                <span>Cor: ${v.cor}</span>
+                                <span>•</span>
+                                <span>Porte: ${v.porte}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-1.5 self-end sm:self-auto">
+                            <button onclick="editarVeiculoFrota(${v.id})" class="text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                <i class="fas fa-edit text-[10px]"></i> Editar
+                            </button>
+                            <button onclick="openModalTransferir(${v.id})" class="text-amber-600 bg-amber-50 border border-amber-100 hover:bg-amber-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                <i class="fas fa-exchange-alt text-[10px]"></i> Vender/Transferir
+                            </button>
+                            <button onclick="deletarVeiculoFrota(${v.id})" class="text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors ${loginProfile === 'admin' ? '' : 'hidden'}">
+                                <i class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleSalvarVeiculoFrota(event) {
+            event.preventDefault();
+            const idInput = document.getElementById('frota-veiculo-id').value;
+            const marca = document.getElementById('frota-marca').value;
+            const modelo = document.getElementById('frota-modelo').value.trim();
+            const placa = document.getElementById('frota-placa').value.trim().toUpperCase();
+            const cor = document.getElementById('frota-cor').value.trim();
+            const porte = document.getElementById('frota-porte').value;
+
+            if (idInput === '') {
+                const novoVeiculo = {
+                    id: Date.now(),
+                    clienteId: activeFrotaClientId,
+                    marca: marca,
+                    modelo: modelo,
+                    placa: placa,
+                    cor: cor,
+                    porte: porte
+                };
+                clientVehicles.push(novoVeiculo);
+                showToast(`Veículo ${modelo} adicionado com sucesso!`);
+            } else {
+                const id = parseInt(idInput);
+                const idx = clientVehicles.findIndex(v => v.id === id);
+                if (idx !== -1) {
+                    clientVehicles[idx].marca = marca;
+                    clientVehicles[idx].modelo = modelo;
+                    clientVehicles[idx].placa = placa;
+                    clientVehicles[idx].cor = cor;
+                    clientVehicles[idx].porte = porte;
+                    showToast(`Veículo ${modelo} atualizado!`);
+                }
+            }
+
+            saveStateToLocalStorage();
+            renderFrotaVeiculos();
+            resetFrotaForm();
+            updateAllData();
+        }
+
+        function editarVeiculoFrota(id) {
+            const vehicle = clientVehicles.find(v => v.id === id);
+            if (!vehicle) return;
+
+            showConfirm('Alterar Veículo', `Deseja realmente carregar as informações do veículo ${vehicle.marca} ${vehicle.modelo} para edição?`, () => {
+                executeEditarVeiculoFrota(vehicle);
+            });
+        }
+
+        function executeEditarVeiculoFrota(vehicle) {
+            document.getElementById('frota-veiculo-id').value = vehicle.id;
+            document.getElementById('frota-marca').value = vehicle.marca;
+            document.getElementById('frota-modelo').value = vehicle.modelo;
+            document.getElementById('frota-placa').value = vehicle.placa;
+            document.getElementById('frota-cor').value = vehicle.cor;
+            document.getElementById('frota-porte').value = vehicle.porte;
+
+            document.getElementById('frota-form-title').innerText = "Editar Detalhes do Veículo";
+            document.getElementById('btn-frota-text').innerText = "Salvar Alterações";
+            document.getElementById('btn-cancelar-edicao-veiculo').classList.remove('hidden');
+        }
+
+        function resetFrotaForm() {
+            document.getElementById('form-frota-veiculo').reset();
+            document.getElementById('frota-veiculo-id').value = '';
+            document.getElementById('frota-form-title').innerText = "Cadastrar Novo Veículo na Frota";
+            document.getElementById('btn-frota-text').innerText = "Adicionar Veículo";
+            document.getElementById('btn-cancelar-edicao-veiculo').classList.add('hidden');
+        }
+
+        function deletarVeiculoFrota(id) {
+            if (loginProfile !== 'admin') {
+                showToast("Ação permitida apenas para Administradores.", "error");
+                return;
+            }
+
+            const ativa = vehicles.some(v => v.vehicleId === id && v.status !== 'Concluído');
+            if (ativa) {
+                showToast("Não é possível deletar um veículo que está em lavagem ativa.", "error");
+                return;
+            }
+
+            showConfirm('Excluir Veículo', 'Tem certeza de que deseja remover permanentemente este carro da frota do cliente?', () => {
+                clientVehicles = clientVehicles.filter(v => v.id !== id);
+                saveStateToLocalStorage();
+                showToast("Veículo removido da frota.");
+                renderFrotaVeiculos();
+                updateAllData();
+            });
+        }
+
+        function openModalTransferir(vehicleId) {
+            activeTransferVehicleId = vehicleId;
+            const vehicle = clientVehicles.find(v => v.id === vehicleId);
+            if (!vehicle) return;
+
+            const originalOwner = customers.find(c => c.id === vehicle.clienteId) || { nome: "Sem dono" };
+            
+            document.getElementById('transferir-veiculo-info').innerHTML = `
+                Veículo: <strong class="text-[#0B132B]">${vehicle.marca} ${vehicle.modelo} (${vehicle.placa})</strong><br>
+                Proprietário Atual: <strong class="text-rose-600">${originalOwner.nome}</strong>
+            `;
+
+            const dropdown = document.getElementById('transferir-novo-dono');
+            dropdown.innerHTML = customers
+                .filter(c => c.id !== vehicle.clienteId)
+                .map(c => `<option value="${c.id}">${c.nome}</option>`)
+                .join('');
+
+            if (dropdown.options.length === 0) {
+                showToast("Não há outros clientes cadastrados para transferência.", "error");
+                return;
+            }
+
+            const modal = document.getElementById('modal-transferir-veiculo');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModalTransferir() {
+            const modal = document.getElementById('modal-transferir-veiculo');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            activeTransferVehicleId = null;
+        }
+
+        function confirmarTransferencia() {
+            const novoDonoId = parseInt(document.getElementById('transferir-novo-dono').value);
+            const idx = clientVehicles.findIndex(v => v.id === activeTransferVehicleId);
+            
+            if (idx !== -1) {
+                const vehicle = clientVehicles[idx];
+                const novoDono = customers.find(c => c.id === novoDonoId);
+                
+                showConfirm('Transferir Proprietário', `Tem certeza de que deseja transferir a propriedade do veículo ${vehicle.marca} ${vehicle.modelo} para o cliente ${novoDono.nome}?`, () => {
+                    clientVehicles[idx].clienteId = novoDonoId;
+                    saveStateToLocalStorage();
+                    showToast(`Propriedade do veículo transferida com sucesso para ${novoDono.nome}!`);
+                    closeModalTransferir();
+                    renderFrotaVeiculos();
+                    updateAllData();
+                });
+            }
+        }
+
+        let adminActionType = ''; 
+        let adminEditId = null; 
+
+        function openAdminAddModal(type) {
+            adminActionType = type;
+            adminEditId = null;
+            
+            const title = document.getElementById('admin-modal-title');
+            const container = document.getElementById('admin-modal-inputs');
+            
+            container.innerHTML = '';
+            
+            if (type === 'marca') {
+                title.innerText = 'Adicionar Nova Marca';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome da Marca</label>
+                        <input type="text" id="adm-marca-nome" required placeholder="Ex: Tesla" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'funcionario') {
+                title.innerText = 'Cadastrar Novo Operador';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Funcionário</label>
+                        <input type="text" id="adm-func-nome" required placeholder="Ex: Lucas Ribeiro" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Cargo/Função</label>
+                        <input type="text" id="adm-func-cargo" required placeholder="Ex: Polidor Técnico" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'lavagem') {
+                title.innerText = 'Criar Novo Pacote de Lavagem';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Pacote</label>
+                        <input type="text" id="adm-wash-nome" required placeholder="Ex: Super Ducha" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">O que é este serviço / o que está incluso?</label>
+                        <textarea id="adm-wash-descricao" placeholder="Ex: Lavagem de chassi, lavagem de motor e enceramento com cera de carnaúba líquida." class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none h-20 resize-none mb-4"></textarea>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Pequeno (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-p" required placeholder="40" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Médio (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-m" required placeholder="50" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Grande (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-g" required placeholder="60" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Comissão dos Funcionários (%)</label>
+                        <input type="number" step="0.1" id="adm-wash-comissao" required placeholder="Ex: 3" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'extra') {
+                title.innerText = 'Criar Novo Serviço Adicional';
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Adicional</label>
+                        <input type="text" id="adm-extra-nome" required placeholder="Ex: Higienização de Ar-Condicionado" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">O que é este serviço extra / o que está incluso?</label>
+                        <textarea id="adm-extra-descricao" placeholder="Ex: Higienização do sistema e troca do filtro de cabine para eliminação de odores." class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none h-20 resize-none mb-4"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Preço Fixo (R$)</label>
+                        <input type="number" step="0.01" id="adm-extra-preco" required placeholder="120.00" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Comissão dos Funcionários (%)</label>
+                        <input type="number" step="0.1" id="adm-extra-comissao" required placeholder="Ex: 5" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            }
+
+            openAdminModal();
+        }
+
+        function openAdminEditModal(type, id) {
+            let label = 'Configuração';
+            if (type === 'cliente') label = 'Cliente';
+            else if (type === 'funcionario') label = 'Operador';
+            else if (type === 'lavagem') label = 'Pacote de Lavagem';
+            else if (type === 'extra') label = 'Serviço Extra';
+            else if (type === 'marca') label = 'Marca';
+
+            if (loginProfile !== 'admin' && type !== 'cliente') {
+                showToast("Acesso restrito para Administradores.", "error");
+                return;
+            }
+
+            showConfirm('Alterar ' + label, `Tem certeza de que deseja carregar os dados deste ${label.toLowerCase()} para edição?`, () => {
+                executeOpenAdminEditModal(type, id);
+            });
+        }
+
+        function executeOpenAdminEditModal(type, id) {
+            adminActionType = type;
+            adminEditId = id;
+            
+            const title = document.getElementById('admin-modal-title');
+            const container = document.getElementById('admin-modal-inputs');
+            container.innerHTML = '';
+
+            if (type === 'marca') {
+                title.innerText = 'Editar Marca';
+                const originalBrand = brands[id];
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome da Marca</label>
+                        <input type="text" id="adm-marca-nome" value="${originalBrand}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'cliente') {
+                title.innerText = 'Editar Cadastro do Cliente';
+                const originalCli = customers.find(c => c.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">CPF (Único / Chave)</label>
+                        <input type="text" id="adm-cli-cpf" value="${originalCli.cpf || ''}" required oninput="handleCPFInput(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome Completo</label>
+                        <input type="text" id="adm-cli-nome" value="${originalCli.nome}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">E-mail</label>
+                        <input type="email" id="adm-cli-email" value="${originalCli.email}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Telefone</label>
+                        <input type="text" id="adm-cli-telefone" value="${originalCli.telefone}" required oninput="handlePhoneInput(this)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Endereço</label>
+                        <input type="text" id="adm-cli-endereco" value="${originalCli.endereco}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'funcionario') {
+                title.innerText = 'Editar Operador';
+                const originalStaff = operators.find(o => o.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Funcionário</label>
+                        <input type="text" id="adm-func-nome" value="${originalStaff.nome}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Cargo/Função</label>
+                        <input type="text" id="adm-func-cargo" value="${originalStaff.cargo}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'lavagem') {
+                title.innerText = 'Editar Pacote de Lavagem';
+                const originalWash = baseWashes.find(w => w.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Pacote</label>
+                        <input type="text" id="adm-wash-nome" value="${originalWash.nome}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">O que é este serviço / o que está incluso?</label>
+                        <textarea id="adm-wash-descricao" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none h-20 resize-none mb-4">${originalWash.descricao || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Pequeno (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-p" value="${originalWash.precoP}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Médio (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-m" value="${originalWash.precoM}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Grande (R$)</label>
+                            <input type="number" step="0.01" id="adm-wash-g" value="${originalWash.precoG}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Comissão dos Funcionários (%)</label>
+                        <input type="number" step="0.1" id="adm-wash-comissao" value="${originalWash.comissaoPct || 0}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            } else if (type === 'extra') {
+                title.innerText = 'Editar Serviço Adicional';
+                const originalExtra = extraServices.find(e => e.id === id);
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome do Adicional</label>
+                        <input type="text" id="adm-extra-nome" value="${originalExtra.nome}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">O que é este serviço extra / o que está incluso?</label>
+                        <textarea id="adm-extra-descricao" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none h-20 resize-none mb-4">${originalExtra.descricao || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Preço Fixo (R$)</label>
+                        <input type="number" step="0.01" id="adm-extra-preco" value="${originalExtra.preco}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none mb-4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Comissão dos Funcionários (%)</label>
+                        <input type="number" step="0.1" id="adm-extra-comissao" value="${originalExtra.comissaoPct || 0}" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none">
+                    </div>
+                `;
+            }
+
+            openAdminModal();
+        }
+
+        function openAdminModal() {
+            const modal = document.getElementById('modal-admin-actions');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAdminModal() {
+            const modal = document.getElementById('modal-admin-actions');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            document.getElementById('form-admin-action').reset();
+        }
+
+        function handleAdminSubmit(event) {
+            event.preventDefault();
+
+            if (loginProfile !== 'admin' && adminActionType !== 'cliente') {
+                showToast("Ação permitida apenas para Administradores.", "error");
+                return;
+            }
+
+            if (adminActionType === 'marca') {
+                const nome = document.getElementById('adm-marca-nome').value;
+                if (adminEditId === null) {
+                    brands.push(nome);
+                    showToast(`Nova marca "${nome}" incluída.`);
+                } else {
+                    brands[adminEditId] = nome;
+                    showToast(`Marca alterada para "${nome}".`);
+                }
+            } else if (adminActionType === 'cliente') {
+                const cpf = document.getElementById('adm-cli-cpf').value.trim();
+                const nome = document.getElementById('adm-cli-nome').value;
+                const email = document.getElementById('adm-cli-email').value;
+                const telefone = document.getElementById('adm-cli-telefone').value;
+                const address = document.getElementById('adm-cli-endereco').value;
+
+                // Validação de CPF Único na Edição
+                const duplicated = customers.some(c => c.cpf === cpf && c.id !== adminEditId);
+                if (duplicated) {
+                    showToast(`Erro! Já existe outro cliente com o CPF: ${cpf}`, "error");
+                    return;
+                }
+
+                const idx = customers.findIndex(c => c.id === adminEditId);
+                if (idx !== -1) {
+                    customers[idx].cpf = cpf;
+                    customers[idx].nome = nome;
+                    customers[idx].email = email;
+                    customers[idx].telefone = telefone;
+                    customers[idx].endereco = address;
+                    showToast(`Cliente ${nome} atualizado.`);
+                }
+            } else if (adminActionType === 'funcionario') {
+                const nome = document.getElementById('adm-func-nome').value;
+                const cargo = document.getElementById('adm-func-cargo').value;
+                if (adminEditId === null) {
+                    operators.push({ id: Date.now(), nome: nome, cargo: cargo });
+                    showToast(`Operador ${nome} cadastrado.`);
+                } else {
+                    const idx = operators.findIndex(o => o.id === adminEditId);
+                    if (idx !== -1) {
+                        operators[idx].nome = nome;
+                        operators[idx].cargo = cargo;
+                    }
+                    showToast(`Operador ${nome} atualizado.`);
+                }
+            } else if (adminActionType === 'lavagem') {
+                const nome = document.getElementById('adm-wash-nome').value;
+                const descricao = document.getElementById('adm-wash-descricao').value.trim();
+                const p = parseFloat(document.getElementById('adm-wash-p').value);
+                const m = parseFloat(document.getElementById('adm-wash-m').value);
+                const g = parseFloat(document.getElementById('adm-wash-g').value);
+                const comissao = parseFloat(document.getElementById('adm-wash-comissao').value);
+                
+                if (adminEditId === null) {
+                    baseWashes.push({ id: Date.now(), nome: nome, descricao: descricao, precoP: p, precoM: m, precoG: g, comissaoPct: comissao });
+                    showToast(`Pacote "${nome}" criado.`);
+                } else {
+                    const idx = baseWashes.findIndex(w => w.id === adminEditId);
+                    if (idx !== -1) {
+                        baseWashes[idx].nome = nome;
+                        baseWashes[idx].descricao = descricao;
+                        baseWashes[idx].precoP = p;
+                        baseWashes[idx].precoM = m;
+                        baseWashes[idx].precoG = g;
+                        baseWashes[idx].comissaoPct = comissao;
+                    }
+                    showToast(`Pacote "${nome}" atualizado.`);
+                }
+            } else if (adminActionType === 'extra') {
+                const nome = document.getElementById('adm-extra-nome').value;
+                const descricao = document.getElementById('adm-extra-descricao').value.trim();
+                const preco = parseFloat(document.getElementById('adm-extra-preco').value);
+                const comissao = parseFloat(document.getElementById('adm-extra-comissao').value);
+                
+                if (adminEditId === null) {
+                    extraServices.push({ id: Date.now(), nome: nome, descricao: descricao, preco: preco, comissaoPct: comissao });
+                    showToast(`Adicional "${nome}" cadastrado.`);
+                } else {
+                    const idx = extraServices.findIndex(e => e.id === adminEditId);
+                    if (idx !== -1) {
+                        extraServices[idx].nome = nome;
+                        extraServices[idx].descricao = descricao;
+                        extraServices[idx].preco = preco;
+                        extraServices[idx].comissaoPct = comissao;
+                    }
+                    showToast(`Adicional "${nome}" atualizado.`);
+                }
+            }
+
+            saveStateToLocalStorage();
+            closeAdminModal();
+            updateAllData();
+        }
+
+        function deleteAdminItem(type, id) {
+            if (loginProfile !== 'admin') {
+                showToast("Acesso Negado.", "error");
+                return;
+            }
+
+            let label = "esta configuração";
+            if (type === 'marca') label = "esta marca";
+            else if (type === 'funcionario') label = "este funcionário";
+            else if (type === 'lavagem') label = "este pacote de lavagem";
+            else if (type === 'extra') label = "este serviço adicional";
+
+            showConfirm('Excluir Configuração', `Tem certeza de que deseja remover permanentemente ${label} das configurações do sistema?`, () => {
+                if (type === 'marca') {
+                    brands.splice(id, 1);
+                    showToast("Marca deletada.");
+                } else if (type === 'funcionario') {
+                    operators = operators.filter(o => o.id !== id);
+                    showToast("Funcionário removido.");
+                } else if (type === 'lavagem') {
+                    baseWashes = baseWashes.filter(w => w.id !== id);
+                    showToast("Pacote de lavagem deletado.");
+                } else if (type === 'extra') {
+                    extraServices = extraServices.filter(e => e.id !== id);
+                    showToast("Serviço adicional deletado.");
+                }
+                saveStateToLocalStorage();
+                updateAllData();
+            });
+        }
+
+        function updateAllData() {
+            const activeVehicles = vehicles.filter(v => v.status !== 'Concluído');
+            const finishedVehicles = vehicles.filter(v => v.status === 'Concluído');
+
+            // 1. CARDS DE INDICADORES (MÉTRICAS DO DIA)
+            const totalVehicles = vehicles.length;
+            document.getElementById('metric-veh-total').innerText = totalVehicles;
+
+            // Mapeando dados do veículo do pátio
+            const resolvedVehicles = vehicles.map(v => {
+                const spec = clientVehicles.find(cv => cv.id === v.vehicleId) || { porte: 'Médio' };
+                return { ...v, porte: spec.porte };
+            });
+
+            const pCount = resolvedVehicles.filter(v => v.porte === 'Pequeno').length;
+            const mCount = resolvedVehicles.filter(v => v.porte === 'Médio').length;
+            const gCount = resolvedVehicles.filter(v => v.porte === 'Grande').length;
+
+            document.getElementById('metric-veh-p').innerText = pCount;
+            document.getElementById('metric-veh-m').innerText = mCount;
+            document.getElementById('metric-veh-g').innerText = gCount;
+
+            const pPercent = totalVehicles > 0 ? (pCount / totalVehicles) * 100 : 0;
+            const mPercent = totalVehicles > 0 ? (mCount / totalVehicles) * 100 : 0;
+            const gPercent = totalVehicles > 0 ? (gCount / totalVehicles) * 100 : 0;
+
+            document.getElementById('bar-veh-p').style.width = `${pPercent}%`;
+            document.getElementById('bar-veh-m').style.width = `${mPercent}%`;
+            document.getElementById('bar-veh-g').style.width = `${gPercent}%`;
+
+            const totalFaturamento = vehicles
+                .filter(v => v.status === 'Concluído' || v.status === 'Em Andamento')
+                .reduce((acc, curr) => acc + curr.valorTotal, 0);
+
+            document.getElementById('metric-faturamento').innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalFaturamento);
+
+            const patioCount = activeVehicles.length;
+            const filaCount = activeVehicles.filter(v => v.status === 'Aguardando').length;
+            const progressoCount = activeVehicles.filter(v => v.status === 'Em Andamento').length;
+
+            document.getElementById('metric-patio-total').innerText = `${patioCount} Carro${patioCount !== 1 ? 's' : ''}`;
+            document.getElementById('metric-patio-fila').innerText = filaCount;
+            document.getElementById('metric-patio-progresso').innerText = progressoCount;
+
+            // 2. RENDERIZAR TABELA DO PÁTIO (INÍCIO)
+            const tbodyPatio = document.getElementById('tbody-patio');
+            tbodyPatio.innerHTML = '';
+
+            if (activeVehicles.length === 0) {
+                tbodyPatio.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-10 text-center text-slate-400 font-semibold">
+                            <i class="fas fa-check-circle text-2xl mb-2 text-slate-300 block"></i>
+                            Tudo limpo! Nenhum carro aguardando no pátio.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                activeVehicles.forEach(veh => {
+                    const clienteObj = customers.find(c => c.id === veh.clienteId) || { nome: "Consumidor Final" };
+                    const washObj = baseWashes.find(w => w.id === veh.baseWashId) || { nome: "Serviço Avulso" };
+                    const vehObj = clientVehicles.find(v => v.id === veh.vehicleId) || { marca: "Modelo", modelo: "Desconhecido", placa: "S/Placa", porte: "Médio", cor: "Cinza" };
+                    
+                    const extrasNomes = veh.extrasIds.map(id => {
+                        const ext = extraServices.find(e => e.id === id);
+                        return ext ? `<span class="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-bold border border-blue-100">${ext.nome}</span>` : '';
+                    }).join(' ');
+
+                    const responsaveisNomes = veh.responsaveisIds.map(id => {
+                        const o = operators.find(op => op.id === id);
+                        return o ? `<span class="block text-xs font-semibold text-slate-700">${o.nome}</span>` : '';
+                    }).join('');
+
+                    const statusClass = veh.status === 'Aguardando' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
+                    const actionBtnText = veh.status === 'Aguardando' ? 'Iniciar' : 'Concluir';
+                    const actionBtnColor = veh.status === 'Aguardando' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-600 hover:bg-emerald-700';
+                    const actionBtnIcon = veh.status === 'Aguardando' ? 'fa-play' : 'fa-check';
+
+                    tbodyPatio.innerHTML += `
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="px-6 py-4 font-semibold text-slate-900">
+                                <div>${vehObj.marca} ${vehObj.modelo}</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">${vehObj.placa} • ${vehObj.cor}</div>
+                                <div class="text-[10px] text-blue-600 font-bold mt-1.5 flex items-center gap-1">
+                                    <i class="far fa-clock"></i> Entrada: ${veh.dataInicio}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-200">${vehObj.porte}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-800">${clienteObj.nome}</div>
+                                <div class="text-xs text-slate-400">${clienteObj.telefone}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-slate-700">${washObj.nome}</div>
+                                <div class="flex flex-wrap gap-1 mt-1.5">${extrasNomes}</div>
+                                <div class="text-xs text-blue-600 font-bold mt-1.5">Total: R$ ${veh.valorTotal.toFixed(2)}</div>
+                            </td>
+                            <td class="px-6 py-4">${responsaveisNomes}</td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusClass}">${veh.status}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button onclick="advanceStatus(${veh.id})" class="text-white text-xs font-bold px-3 py-1.5 rounded-lg ${actionBtnColor} flex items-center gap-1.5 transition-colors">
+                                        <i class="fas ${actionBtnIcon}"></i> ${actionBtnText}
+                                    </button>
+                                    <button onclick="deleteWash(${veh.id})" class="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg ${loginProfile === 'admin' ? '' : 'hidden'}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // 3. RENDERIZAR CLIENTES CADASTRADOS (COM FILTRAGEM INTELIGENTE)
+            const tbodyClientes = document.getElementById('tbody-clientes');
+            tbodyClientes.innerHTML = '';
+
+            const searchClientVal = (document.getElementById('search-cliente')?.value || "").toLowerCase().replace(/\D/g, "");
+            const searchClientText = (document.getElementById('search-cliente')?.value || "").toLowerCase();
+            const searchPlacaVal = (document.getElementById('search-placa')?.value || "").toUpperCase();
+
+            customers.forEach(cli => {
+                const clientVehs = clientVehicles.filter(v => v.clienteId === cli.id);
+                const countVehicles = clientVehs.length;
+
+                // Validações de filtro de busca
+                const matchesClient = cli.nome.toLowerCase().includes(searchClientText) || 
+                                      (cli.cpf && cli.cpf.replace(/\D/g, "").includes(searchClientVal));
+                
+                const matchesPlate = searchPlacaVal === "" || 
+                                     clientVehs.some(v => v.placa.toUpperCase().includes(searchPlacaVal));
+
+                if (matchesClient && matchesPlate) {
+                    tbodyClientes.innerHTML += `
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="px-6 py-4 font-mono text-xs font-bold text-slate-700">${cli.cpf || 'Não cadastrado'}</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">${cli.nome}</td>
+                            <td class="px-6 py-4">
+                                <div>${cli.telefone}</div>
+                                <div class="text-xs text-slate-400">${cli.email}</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500">${cli.endereco}</td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openModalFrota(${cli.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-xl border border-blue-100 transition-colors flex items-center gap-1.5 mx-auto">
+                                    <i class="fas fa-car text-[10px]"></i> Frota (${countVehicles})
+                                </button>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button onclick="openAdminEditModal('cliente', ${cli.id})" class="text-slate-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteCustomer(${cli.id})" class="text-slate-400 hover:text-red-600 transition-colors p-1.5 rounded-lg ${loginProfile === 'admin' ? '' : 'hidden'}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // 4. RENDERIZAR HISTÓRICO COMPLETO
+            const tbodyHistorico = document.getElementById('tbody-historico');
+            tbodyHistorico.innerHTML = '';
+
+            vehicles.forEach(veh => {
+                const clienteObj = customers.find(c => c.id === veh.clienteId) || { nome: "Consumidor Final" };
+                const washObj = baseWashes.find(w => w.id === veh.baseWashId) || { nome: "Serviço Avulso" };
+                const vehObj = clientVehicles.find(v => v.id === veh.vehicleId) || { marca: "Modelo", modelo: "Desconhecido", placa: "S/Placa", porte: "Médio", cor: "Cinza" };
+                
+                const extrasNomes = veh.extrasIds.map(id => {
+                    const ext = extraServices.find(e => e.id === id);
+                    return ext ? ext.nome : '';
+                }).filter(Boolean).join(', ');
+
+                const responsaveisNomes = veh.responsaveisIds.map(id => {
+                    const o = operators.find(op => op.id === id);
+                    return o ? o.nome : '';
+                }).filter(Boolean).join(', ');
+
+                const badgeStatus = veh.status === 'Concluído' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+
+                tbodyHistorico.innerHTML += `
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                        <td class="px-6 py-4 font-mono text-xs text-slate-400">#${veh.id}</td>
+                        <td class="px-6 py-4 font-semibold text-slate-900">${vehObj.marca} ${vehObj.modelo}</td>
+                        <td class="px-6 py-4 font-mono text-xs tracking-wider font-bold">${vehObj.placa}</td>
+                        <td class="px-6 py-4 font-medium text-slate-700">${clienteObj.nome}</td>
+                        <td class="px-6 py-4 text-slate-500">
+                            <div>${washObj.nome} (${vehObj.porte})</div>
+                            ${extrasNomes ? `<div class="text-xs text-slate-400 mt-0.5">Adicionais: ${extrasNomes}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 font-bold text-slate-800">R$ ${veh.valorTotal.toFixed(2)}</td>
+                        <td class="px-6 py-4 text-slate-500 text-xs">${responsaveisNomes}</td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${badgeStatus}">${veh.status}</span>
+                            <div class="text-[10px] text-slate-400 font-medium mt-1.5 space-y-0.5">
+                                <div><i class="fas fa-play text-[8px] text-blue-500"></i> Início: ${veh.dataInicio || '-'}</div>
+                                <div><i class="fas fa-check text-[8px] text-emerald-500"></i> Fim: ${veh.dataConclusao || '-'}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center admin-action-cell ${loginProfile === 'admin' ? '' : 'hidden'}">
+                            <button onclick="deleteWash(${veh.id})" class="text-slate-400 hover:text-red-600 transition-colors p-1">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.querySelectorAll('.admin-action-header').forEach(el => {
+                if (loginProfile === 'admin') el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+
+            // 5. CÁLCULO DE COMISSÕES (SPLIT DE OPERADORES COM PORCENTAGENS DINÂMICAS)
+            const staffStats = {};
+            
+            operators.forEach(op => {
+                staffStats[op.id] = { comissao: 0, count: 0, nome: op.nome, cargo: op.cargo };
+            });
+
+            vehicles.filter(v => v.status === 'Concluído' || v.status === 'Em Andamento').forEach(veh => {
+                const baseWash = baseWashes.find(w => w.id === veh.baseWashId);
+                const spec = clientVehicles.find(cv => cv.id === veh.vehicleId) || { porte: 'Médio' };
+                
+                let basePrice = 0;
+                if (spec.porte === 'Pequeno') basePrice = baseWash ? baseWash.precoP : 0;
+                else if (spec.porte === 'Médio') basePrice = baseWash ? baseWash.precoM : 0;
+                else if (spec.porte === 'Grande') basePrice = baseWash ? baseWash.precoG : 0;
+
+                const basePct = baseWash ? (baseWash.comissaoPct || 0) : 0;
+                let totalCommission = basePrice * (basePct / 100);
+
+                veh.extrasIds.forEach(id => {
+                    const extra = extraServices.find(e => e.id === id);
+                    if (extra) {
+                        const extraPct = extra.comissaoPct || 0;
+                        totalCommission += extra.preco * (extraPct / 100);
+                    }
+                });
+
+                const operatorsCount = veh.responsaveisIds.length;
+                if (operatorsCount > 0) {
+                    const splitCommission = totalCommission / operatorsCount;
+                    veh.responsaveisIds.forEach(id => {
+                        if (staffStats[id]) {
+                            staffStats[id].comissao += splitCommission;
+                            staffStats[id].count += 1;
+                        }
+                    });
+                }
+            });
+
+            const gridComissoes = document.getElementById('grid-funcionarios-comissoes');
+            gridComissoes.innerHTML = '';
+            
+            Object.keys(staffStats).forEach(id => {
+                const staff = staffStats[id];
+                const initials = staff.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                
+                gridComissoes.innerHTML += `
+                    <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${staff.nome}</h4>
+                                <span class="text-[10px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded uppercase">${staff.cargo}</span>
+                            </div>
+                            <div class="w-10 h-10 bg-blue-100/50 text-blue-600 rounded-xl flex items-center justify-center font-bold">${initials}</div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100/70 flex justify-between items-end">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Comissão Acumulada</span>
+                                <p class="text-2xl font-black text-emerald-600 mt-0.5">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(staff.comissao)}</p>
+                            </div>
+                            <button onclick="verLavagensFuncionario(${id})" class="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-150 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm">
+                                <span>${staff.count} lavagens</span> <i class="fas fa-eye text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 6. RENDERIZAR PAINEL ADMIN (CONFIGURAÇÕES DO SISTEMA)
+            if (loginProfile === 'admin') {
+                const containerBrands = document.getElementById('admin-brands-list');
+                containerBrands.innerHTML = brands.map((b, idx) => `
+                    <div class="flex justify-between items-center bg-white border border-slate-100 p-2.5 rounded-lg text-sm">
+                        <span class="font-semibold text-slate-700">${b}</span>
+                        <div class="flex gap-1">
+                            <button onclick="openAdminEditModal('marca', ${idx})" class="text-slate-400 hover:text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteAdminItem('marca', ${idx})" class="text-slate-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+
+                const containerStaff = document.getElementById('admin-staff-list');
+                containerStaff.innerHTML = operators.map(o => `
+                    <div class="flex justify-between items-center bg-white border border-slate-100 p-2.5 rounded-lg text-sm">
+                        <div>
+                            <div class="font-semibold text-slate-700">${o.nome}</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase">${o.cargo}</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openAdminEditModal('funcionario', ${o.id})" class="text-slate-400 hover:text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteAdminItem('funcionario', ${o.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+
+                const containerWashes = document.getElementById('admin-washes-list');
+                containerWashes.innerHTML = baseWashes.map(w => `
+                    <div class="bg-white border border-slate-100 p-4 rounded-xl flex flex-col md:flex-row justify-between gap-4 font-sans">
+                        <div class="max-w-md">
+                            <h5 class="font-bold text-slate-800 text-sm">${w.nome}</h5>
+                            ${w.descricao ? `<p class="text-xs text-slate-500 mt-1">${w.descricao}</p>` : '<p class="text-xs text-slate-400 italic mt-1">Nenhuma descrição informada.</p>'}
+                            <p class="text-[11px] text-slate-400 mt-1.5">Comissão do Operador: <span class="font-bold text-blue-600">${w.comissaoPct}%</span></p>
+                        </div>
+                        <div class="flex gap-4 text-xs font-semibold items-center">
+                            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded">P: R$ ${w.precoP.toFixed(2)}</span>
+                            <span class="bg-sky-50 text-sky-700 px-2 py-1 rounded">M: R$ ${w.precoM.toFixed(2)}</span>
+                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded">G: R$ ${w.precoG.toFixed(2)}</span>
+                            <div class="flex gap-1 border-l border-slate-100 pl-3">
+                                <button onclick="openAdminEditModal('lavagem', ${w.id})" class="text-slate-400 hover:text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteAdminItem('lavagem', ${w.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                const containerExtras = document.getElementById('admin-extras-list');
+                containerExtras.innerHTML = extraServices.map(e => `
+                    <div class="bg-white border border-slate-100 p-3 rounded-xl flex justify-between items-center text-xs w-full shrink-0">
+                        <div class="max-w-[70%]">
+                            <div class="font-bold text-slate-700">${e.nome}</div>
+                            ${e.descricao ? `<p class="text-[10px] text-slate-500 mt-0.5 line-clamp-2">${e.descricao}</p>` : ''}
+                            <div class="text-slate-400 mt-1.5">Preço: <span class="font-semibold text-slate-700">R$ ${e.preco.toFixed(2)}</span> | Comis: <span class="font-bold text-blue-600">${e.comissaoPct}%</span></div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openAdminEditModal('extra', ${e.id})" class="text-slate-400 hover:text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteAdminItem('extra', ${e.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function verLavagensFuncionario(operatorId) {
+            const operator = operators.find(o => o.id === operatorId);
+            if (!operator) return;
+
+            document.getElementById('detalhes-func-nome').innerText = operator.nome;
+            const container = document.getElementById('detalhes-func-lista');
+            container.innerHTML = '';
+
+            const opWashes = vehicles.filter(v => v.responsaveisIds.includes(operatorId) && (v.status === 'Concluído' || v.status === 'Em Andamento'));
+
+            if (opWashes.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-xs text-slate-400 py-8 font-semibold">
+                        <i class="fas fa-info-circle text-lg mb-1 block text-slate-300"></i>
+                        Este funcionário não realizou serviços ativos ou concluídos hoje.
+                    </div>
+                `;
+            } else {
+                opWashes.forEach(veh => {
+                    const baseWash = baseWashes.find(w => w.id === veh.baseWashId) || { nome: "Serviço", comissaoPct: 0 };
+                    const spec = clientVehicles.find(cv => cv.id === veh.vehicleId) || { marca: "Carro", modelo: "", placa: "S/Placa", porte: "Médio" };
+                    
+                    let basePrice = 0;
+                    if (spec.porte === 'Pequeno') basePrice = baseWash.precoP || 0;
+                    else if (spec.porte === 'Médio') basePrice = baseWash.precoM || 0;
+                    else if (spec.porte === 'Grande') basePrice = baseWash.precoG || 0;
+
+                    const basePct = baseWash.comissaoPct || 0;
+                    let totalCommission = basePrice * (basePct / 100);
+
+                    const extrasNomes = [];
+                    veh.extrasIds.forEach(id => {
+                        const extra = extraServices.find(e => e.id === id);
+                        if (extra) {
+                            extrasNomes.push(extra.nome);
+                            const extraPct = extra.comissaoPct || 0;
+                            totalCommission += extra.preco * (extraPct / 100);
+                        }
+                    });
+
+                    const responsaveisCount = veh.responsaveisIds.length;
+                    const opCommissionCut = totalCommission / responsaveisCount;
+
+                    container.innerHTML += `
+                        <div class="bg-slate-50 border border-slate-150 p-3.5 rounded-2xl flex justify-between items-center text-xs gap-3">
+                            <div class="space-y-1">
+                                <div class="font-bold text-slate-800">${spec.marca} ${spec.modelo} <span class="text-[10px] text-slate-400 font-mono font-normal">(${spec.placa})</span></div>
+                                <div class="text-[10px] text-slate-500 font-medium">
+                                    Serviço Base: ${baseWash.nome} (${spec.porte})
+                                    ${extrasNomes.length > 0 ? `<br><span class="text-[9px] text-slate-400">Adicionais: ${extrasNomes.join(', ')}</span>` : ''}
+                                </div>
+                                <div class="text-[9px] font-semibold ${veh.status === 'Concluído' ? 'text-emerald-600' : 'text-blue-500'} uppercase tracking-wide">
+                                    Início: ${veh.dataInicio} ${veh.status === 'Concluído' ? `• Conclusão: ${veh.dataConclusao}` : ''}
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0 pl-3 border-l border-slate-200">
+                                <span class="text-[9px] text-slate-400 block font-bold uppercase tracking-wider">Faturamento</span>
+                                <span class="font-black text-slate-700 font-mono block">R$ ${veh.valorTotal.toFixed(2)}</span>
+                                <span class="text-[9px] text-slate-400 block font-bold uppercase tracking-wider mt-1.5">Comissão</span>
+                                <span class="font-black text-emerald-600 font-mono">+ R$ ${opCommissionCut.toFixed(2)}</span>
+                                ${responsaveisCount > 1 ? `<span class="text-[8px] text-slate-400 block leading-none mt-0.5">Sua quota (Split /${responsaveisCount})</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const modal = document.getElementById('modal-detalhes-lavagens-funcionario');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModalDetalhesFuncionario() {
+            const modal = document.getElementById('modal-detalhes-lavagens-funcionario');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // Exposição global das funções necessárias
+        window.toggleSidebar = toggleSidebar;
+        window.setActiveTab = setActiveTab;
+        window.logout = logout;
+        window.setLoginProfile = setLoginProfile;
+        window.handleLogin = handleLogin;
+        window.handleCadastroCliente = handleCadastroCliente;
+        window.deleteCustomer = deleteCustomer;
+        window.onCustomerChange = onCustomerChange;
+        window.mostrarCadastroVeiculoRapido = mostrarCadastroVeiculoRapido;
+        window.ocultarCadastroVeiculoRapido = ocultarCadastroVeiculoRapido;
+        window.salvarVeiculoRapido = salvarVeiculoRapido;
+        window.openModalCadastro = openModalCadastro;
+        window.closeModalCadastro = closeModalCadastro;
+        window.handleNovaLavagem = handleNovaLavagem;
+        window.advanceStatus = advanceStatus;
+        window.deleteWash = deleteWash;
+        window.exportToPDF = exportToPDF;
+        window.exportToCSV = exportToCSV;
+        window.openModalFrota = openModalFrota;
+        window.closeModalFrota = closeModalFrota;
+        window.handleSalvarVeiculoFrota = handleSalvarVeiculoFrota;
+        window.editarVeiculoFrota = editarVeiculoFrota;
+        window.resetFrotaForm = resetFrotaForm;
+        window.deletarVeiculoFrota = deletarVeiculoFrota;
+        window.openModalTransferir = openModalTransferir;
+        window.closeModalTransferir = closeModalTransferir;
+        window.confirmarTransferencia = confirmarTransferencia;
+        window.openAdminAddModal = openAdminAddModal;
+        window.openAdminEditModal = openAdminEditModal;
+        window.closeAdminModal = closeAdminModal;
+        window.handleAdminSubmit = handleAdminSubmit;
+        window.deleteAdminItem = deleteAdminItem;
+        window.verLavagensFuncionario = verLavagensFuncionario;
+        window.closeModalDetalhesFuncionario = closeModalDetalhesFuncionario;
+        window.closeConfirmModal = closeConfirmModal;
+        window.handleCPFInput = handleCPFInput;
+        window.handlePhoneInput = handlePhoneInput;
+        window.updateLiveCalculation = updateLiveCalculation;
+        window.renderIndividualConfigs = renderIndividualConfigs;
+        window.updateAllData = updateAllData;
+        window.restaurarDadosPadrao = restaurarDadosPadrao;
+
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        });
+
+        window.onload = function() {
+            updateAllData();
+        }
+    </script>
+</body>
+</html>
